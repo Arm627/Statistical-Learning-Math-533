@@ -1,0 +1,54 @@
+---
+title: "Activity1"
+author: "Monte Davityan"
+date: '2022-09-07'
+output: html_document
+---
+
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(GGally)
+fire <- read.csv("forestfires.csv")
+```
+
+
+```{r}
+head(fire)
+```
+
+
+```{r}
+str(fire)
+
+summary(fire)
+```
+
+```{r}
+#ggpairs(fire)
+```
+
+```{r}
+fire <- fire %>% mutate(month = as.factor(month),
+                day = as.factor(day))
+```
+```{r}
+# Reponse area (multiple regression)
+lm.fit <- lm(area ~ ., data = fire )
+summary(lm.fit)
+
+par(mfrow=c(2,2))
+plot(lm.fit)
+```
+
+```{r}
+# Binary area
+fire <- fire %>% 
+  mutate(binary_area = if_else(area != 0, "Not zero", "Zero")) %>% 
+  mutate(binary_area = as.factor(binary_area))
+
+glm.fit <- glm(binary_area ~ ., family = "binomial", data = fire %>% select(-area))
+summary(glm.fit)
+```
+

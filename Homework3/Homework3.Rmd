@@ -1,7 +1,7 @@
 ---
-title: "Activity1"
-author: "Monte Davityan"
-date: '2022-09-07'
+title: "Homework 3"
+author: "Brandon Amaral, Monte Davityan, Nicholas Lombardo, Hongkai Lu"
+date: '2022-09-16'
 output: pdf_document
 ---
 
@@ -10,7 +10,7 @@ output: pdf_document
 library(tidyverse)
 library(ggplot2)
 library(GGally)
-fire <- read.csv("forestfires.csv")
+fire <- read.csv("data/forestfires.csv")
 ```
 
 
@@ -61,9 +61,9 @@ val <- fire[-training_ind,c("temp","RH","wind","rain")]
 
 
 
-lm(y ~ x1 + x2)
-lm(y ~ x1 + x4 + x3)
-lm(y ~ x1 + x2 + x3 + x4)
+#lm(y ~ x1 + x2)
+#lm(y ~ x1 + x4 + x3)
+#lm(y ~ x1 + x2 + x3 + x4)
 ```
 
 

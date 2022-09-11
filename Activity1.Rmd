@@ -34,13 +34,34 @@ fire <- fire %>% mutate(month = as.factor(month),
                 day = as.factor(day))
 ```
 ```{r}
-# Reponse area (multiple regression)
+# Response area (multiple regression)
 lm.fit <- lm(area ~ ., data = fire )
 summary(lm.fit)
 
 par(mfrow=c(2,2))
 plot(lm.fit)
+
+# Response area (multiple regression) (Transformed Model)
+lm.fit.transformed <- lm(log(area + 1) ~ ., data = fire )
+summary(lm.fit.transformed)
+
+par(mfrow=c(2,2))
+plot(lm.fit.transformed)
 ```
+
+
+```{r}
+# Predict using LM for rows 15-25 and report MSE:
+
+pred <- predict(lm.fit, newdata = fire %>% filter(row_number() %in% seq(15, 25)))
+pred.transformed <- predict(lm.fit.transformed, newdata = fire %>% filter(row_number() %in% seq(15, 25)))
+
+actual <- fire %>% filter(row_number() %in% seq(15, 25)) %>% select(area)
+
+MSE <- mean(unlist((pred - actual)^2))
+MSE.transformed <- mean(unlist((pred.transformed - actual)^2))
+```
+
 
 ```{r}
 # Binary area

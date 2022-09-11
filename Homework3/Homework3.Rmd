@@ -5,6 +5,10 @@ date: '2022-09-16'
 output: pdf_document
 ---
 
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
 
 ```{r}
 library(tidyverse)
@@ -53,13 +57,18 @@ plot(lm.fit.transformed)
 ```{r}
 # Predict using LM for rows 15-25 and report MSE:
 
-pred <- predict(lm.fit, newdata = fire %>% filter(row_number() %in% seq(15, 25)))
-pred.transformed <- predict(lm.fit.transformed, newdata = fire %>% filter(row_number() %in% seq(15, 25)))
+pred <- predict(lm.fit, newdata = fire[15:25,])
+pred.transformed <- predict(lm.fit.transformed, newdata = fire[15:25,])
 
-actual <- fire %>% filter(row_number() %in% seq(15, 25)) %>% select(area)
+actual <- fire[15:25,] %>% select(area)
 
 MSE <- mean(unlist((pred - actual)^2))
+MSE
 MSE.transformed <- mean(unlist((pred.transformed - actual)^2))
+MSE.transformed
+
+plot(pred, unlist(actual))
+plot(pred.transformed, unlist(actual))
 ```
 
 
@@ -75,12 +84,101 @@ summary(glm.fit)
 
 
 ```{r}
+set.seed(123)
+
 training_ind <- sample(1:517, floor(.8*517), replace = FALSE)
 
-train <- fire[training_ind,c("temp","RH","wind","rain")]
-val <- fire[-training_ind,c("temp","RH","wind","rain")]
+train <- fire[training_ind, c("temp","RH","wind","rain", "area")]
+val <- fire[-training_ind, c("temp","RH","wind","rain", "area")]
 
+model.combos <- function(model, 
+                         response, 
+                         predictors, 
+                         training, 
+                         validation, 
+                         null.model = TRUE,
+                         debug = FALSE) {
+  "This function iterates through all possible combos (2^n)-1 of 
+    predictor variables and outputs the model with the best validation 
+    MSE
+  
+    Inputs:
+      - model: A supervised regression learning model object (ie. lm)
+          Expecting the function to have formula and data parameters
+      - response: A string. The name of the response variable
+      - predictors: A vector of strings. The list of names of the     
+          predictor variables
+      - training: A data frame. The training set
+      - validation: A data frame. The validation set
+      - null.model: A boolean. (Optional). If TRUE, will compare the initial best
+          model as the null model (which is just the average). If set to FALSE,
+          the intial best model will be null and only the (2^n)-1 combos will be           considered
+      - debug: A boolean. (Optional). If TRUE print out the best.MSE and 
+          best.predictions as they are being calculated
+      
+    Output:
+      - best.predictors: A list. Containing the names of the best 
+        predictors (as measured by lowest validation MSE)
+      - best.mse: A number. The best MSE among the models
+  "
+  # Combinations is made from this code: 
+  # https://stackoverflow.com/questions/40049313/generate-all-combinations-of-all-lengths-in-r-from-a-vector
+  # It generates the combinations of predictors as a list of strings
+  combinations <- do.call("c", lapply(seq_along(predictors), function(i) combn(predictors, i, FUN = list)))
+  
+  if (debug) {
+    print(combinations)
+  }
+  
+  # The validation response
+  actual <- validation[[response]]
+  
+  # If null.model is TRUE, compare to the null model (the average)
+  if (null.model) {
+    average.model <- mean(training[[response]])
+    best.MSE <- mean((average.model - actual)^2)
+    best.predictions <- c("null model")
+    
+    if (debug) {
+      print(best.MSE)
+      print("null")
+    }
+  }
+  # If null.model is FALSE, compare only the (2^n)-1 models
+  else {
+    best.MSE <- NA
+    best.predictions <- NA
+  }
+  
+  
+  # Loop through the combinations
+  for (combo in combinations) {
+    # Make the formula from the combos and the response
+    formula <- reformulate(combo, response = response)
+    # Fit the model using the given model and training data
+    model.fit <- model(formula = formula, data = training)
+    # Make predictions on the validation set
+    preds <- predict(model.fit, newdata = validation)
+    # Calculate validation MSE using the predictions
+    MSE.validation <- mean(unlist((preds - actual)^2))
+    # Update the best.predictions if the MSE is lower then the prior 
+      # best
+    if (debug) {
+      print(MSE.validation)
+      print(combo)
+    }
+    
+    if (is.na(best.MSE) || MSE.validation < best.MSE) {
+      best.MSE <- MSE.validation
+      best.predictions <- combo
+    }
+  }
+  
+  # Return best.MSE and best.predictions
+  return(list(Best.MSE = best.MSE, Best.Combination = best.predictions))
+}
 
+model.combos(lm, "area", c("temp","RH","wind","rain"), train, val, TRUE, FALSE)
 
 #lm(y ~ x1 + x2)
 #lm(y ~ x1 + x4 + x3)

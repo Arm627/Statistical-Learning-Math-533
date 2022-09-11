@@ -1,8 +1,8 @@
 ---
-title: "Activity1"
-author: "Monte Davityan"
-date: '2022-09-07'
-output: html_document
+title: "Homework 3"
+author: "Brandon Amaral, Monte Davityan, Nicholas Lombardo, Hongkai Lu"
+date: '2022-09-16'
+output: pdf_document
 ---
 
 
@@ -10,7 +10,7 @@ output: html_document
 library(tidyverse)
 library(ggplot2)
 library(GGally)
-fire <- read.csv("forestfires.csv")
+fire <- read.csv("data/forestfires.csv")
 ```
 
 
@@ -72,4 +72,20 @@ fire <- fire %>%
 glm.fit <- glm(binary_area ~ ., family = "binomial", data = fire %>% select(-area))
 summary(glm.fit)
 ```
+
+
+```{r}
+training_ind <- sample(1:517, floor(.8*517), replace = FALSE)
+
+train <- fire[training_ind,c("temp","RH","wind","rain")]
+val <- fire[-training_ind,c("temp","RH","wind","rain")]
+
+
+
+#lm(y ~ x1 + x2)
+#lm(y ~ x1 + x4 + x3)
+#lm(y ~ x1 + x2 + x3 + x4)
+```
+
+
 

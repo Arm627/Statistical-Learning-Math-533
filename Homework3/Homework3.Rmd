@@ -187,3 +187,37 @@ model.combos(lm, "area", c("temp","RH","wind","rain"), train, val, TRUE, FALSE)
 
 
 
+# Chapter 3 Summary:
+## Section 3.1:
+
+## Section 3.2:
+
+## Section 3.3:
+
+## Section 3.4:
+
+<ol>
+  <li><b>Exploring the relationship between sales and advertising budget:</b> Since there are three variables that make up advertising budget (TV, radio, and newspaper), a multiple linear regression model is used with TV, radio and newspaper as the predictors and sales as the response. An F-statistic can be used to test if $H_0: \beta_{TV} = \beta_{radio} = \beta_{newspaper} = 0$. For this dataset, the pvalue was low providing significant evidence of the relationship between sales and advertising budget.</li>
+  <li><b>Strenght of the relationship:</b>RSE which estimates the standard deviation of the response (in this case the sales) between the population regression line; and, $R^2$ which is the percentage of variability of the response explained by the predictors are two good measures for the strength of a relationship between response and predictors. </li>
+  <li><b>Which media are association with sales?:</b> Individual pvalues of the predictors can be viewed to identify the significance of any individual predictor to the response.</li>
+  <li><b>How large is the association between each medium and sales?:</b> Constructing confidence intervals for the individual $\hat{\beta}$ coefficients is a good way to go about measure the size of association between the predictors and the response. If the confidence interval includes 0, then it may suggest a predictor has non- significant impact on the response. However, collinearity could be an issue which results in large confidence bounds. VIF scores can be viewed to ensure collinearity is not an issue. Another technique to identify individual relationships between the predictors and response is to perform simple linear regression models between each predictor and response and identify size of association. </li>
+  <li><b>How accurately can we predict future sales?:</b> If we are interested in an individual response then we can use a prediction interval, but if interested in an average response we can use a confidence interval. The bounds for prediction intervals are always wider then confidence intervals due to taking into account irreducible error.</li>
+  <li><b>Is the relationship linear?:</b> A residual diagnostic plot can be used to identify linearity. We expect no pattern (centered at 0) among the residuals if the relationship is linear. Transformations can be used if patterns are found.</li>
+  <li><b>Is there synergy among the advertising media?:</b>Interactions among variables should be explored.</li>
+</ol>
+
+## Section 3.5: Comparison of Linear Regression with K-Nearest Neighbors
+
+Linear regression is a parametric method due to its linearity assumption. The advantage to parametric methods is they are easy to fit because of the small number of parameters to estimate, tests for significance are easy to perform, and interpretation is usually clear. The disadvantage of parametric methods are their strong assumptions. If the true model deviates from our assumed model, then the results will be poor. 
+
+Non- parametric methods do not have assumptions of the model form and are generally more flexible then parametric methods. 
+
+### KNN Regression:
+Is very similar to KNN classifier (but for when the response is continuous) in that the model will identify the K closest points to a point of prediction (denoted as $N_0$) and averages those to form the prediction. 
+
+$$\hat{f}(x_0) = \frac{1}{K}\sum_{x_i \in N_0} y_i$$
+The best value of K is based on the bias- variance trade off. Smaller K will have lower bias but higher variance whereas larger values of K will have higher bias but lower variance. KNN can suffer from the curse of dimensionality where in higher dimensions, the K observations closest to the point of prediction may be very off.
+
+In the choice between parametric or non- parametric methods, if the true form of the relationship matches the parametric models assumptions, then it will outperform the non- parametric method. 
+
+"In general, parametric methods will tend to outperform non- parametric approaches when there is a small number of observations per predictor".

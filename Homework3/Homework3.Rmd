@@ -5,6 +5,10 @@ date: '2022-09-16'
 output: pdf_document
 ---
 
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
 
 ```{r}
 library(tidyverse)
@@ -34,13 +38,39 @@ fire <- fire %>% mutate(month = as.factor(month),
                 day = as.factor(day))
 ```
 ```{r}
-# Reponse area (multiple regression)
+# Response area (multiple regression)
 lm.fit <- lm(area ~ ., data = fire )
 summary(lm.fit)
 
 par(mfrow=c(2,2))
 plot(lm.fit)
+
+# Response area (multiple regression) (Transformed Model)
+lm.fit.transformed <- lm(log(area + 1) ~ ., data = fire )
+summary(lm.fit.transformed)
+
+par(mfrow=c(2,2))
+plot(lm.fit.transformed)
 ```
+
+
+```{r}
+# Predict using LM for rows 15-25 and report MSE:
+
+pred <- predict(lm.fit, newdata = fire[15:25,])
+pred.transformed <- predict(lm.fit.transformed, newdata = fire[15:25,])
+
+actual <- fire[15:25,] %>% select(area)
+
+MSE <- mean(unlist((pred - actual)^2))
+MSE
+MSE.transformed <- mean(unlist((pred.transformed - actual)^2))
+MSE.transformed
+
+plot(pred, unlist(actual))
+plot(pred.transformed, unlist(actual))
+```
+
 
 ```{r}
 # Binary area
@@ -54,12 +84,101 @@ summary(glm.fit)
 
 
 ```{r}
+set.seed(123)
+
 training_ind <- sample(1:517, floor(.8*517), replace = FALSE)
 
-train <- fire[training_ind,c("temp","RH","wind","rain")]
-val <- fire[-training_ind,c("temp","RH","wind","rain")]
+train <- fire[training_ind, c("temp","RH","wind","rain", "area")]
+val <- fire[-training_ind, c("temp","RH","wind","rain", "area")]
 
+model.combos <- function(model, 
+                         response, 
+                         predictors, 
+                         training, 
+                         validation, 
+                         null.model = TRUE,
+                         debug = FALSE) {
+  "This function iterates through all possible combos (2^n)-1 of 
+    predictor variables and outputs the model with the best validation 
+    MSE
+  
+    Inputs:
+      - model: A supervised regression learning model object (ie. lm)
+          Expecting the function to have formula and data parameters
+      - response: A string. The name of the response variable
+      - predictors: A vector of strings. The list of names of the     
+          predictor variables
+      - training: A data frame. The training set
+      - validation: A data frame. The validation set
+      - null.model: A boolean. (Optional). If TRUE, will compare the initial best
+          model as the null model (which is just the average). If set to FALSE,
+          the intial best model will be null and only the (2^n)-1 combos will be           considered
+      - debug: A boolean. (Optional). If TRUE print out the best.MSE and 
+          best.predictions as they are being calculated
+      
+    Output:
+      - best.predictors: A list. Containing the names of the best 
+        predictors (as measured by lowest validation MSE)
+      - best.mse: A number. The best MSE among the models
+  "
+  # Combinations is made from this code: 
+  # https://stackoverflow.com/questions/40049313/generate-all-combinations-of-all-lengths-in-r-from-a-vector
+  # It generates the combinations of predictors as a list of strings
+  combinations <- do.call("c", lapply(seq_along(predictors), function(i) combn(predictors, i, FUN = list)))
+  
+  if (debug) {
+    print(combinations)
+  }
+  
+  # The validation response
+  actual <- validation[[response]]
+  
+  # If null.model is TRUE, compare to the null model (the average)
+  if (null.model) {
+    average.model <- mean(training[[response]])
+    best.MSE <- mean((average.model - actual)^2)
+    best.predictions <- c("null model")
+    
+    if (debug) {
+      print(best.MSE)
+      print("null")
+    }
+  }
+  # If null.model is FALSE, compare only the (2^n)-1 models
+  else {
+    best.MSE <- NA
+    best.predictions <- NA
+  }
+  
+  
+  # Loop through the combinations
+  for (combo in combinations) {
+    # Make the formula from the combos and the response
+    formula <- reformulate(combo, response = response)
+    # Fit the model using the given model and training data
+    model.fit <- model(formula = formula, data = training)
+    # Make predictions on the validation set
+    preds <- predict(model.fit, newdata = validation)
+    # Calculate validation MSE using the predictions
+    MSE.validation <- mean(unlist((preds - actual)^2))
+    # Update the best.predictions if the MSE is lower then the prior 
+      # best
+    if (debug) {
+      print(MSE.validation)
+      print(combo)
+    }
+    
+    if (is.na(best.MSE) || MSE.validation < best.MSE) {
+      best.MSE <- MSE.validation
+      best.predictions <- combo
+    }
+  }
+  
+  # Return best.MSE and best.predictions
+  return(list(Best.MSE = best.MSE, Best.Combination = best.predictions))
+}
 
+model.combos(lm, "area", c("temp","RH","wind","rain"), train, val, TRUE, FALSE)
 
 #lm(y ~ x1 + x2)
 #lm(y ~ x1 + x4 + x3)
@@ -69,3 +188,37 @@ val <- fire[-training_ind,c("temp","RH","wind","rain")]
 Here's a test change
 
 
+# Chapter 3 Summary:
+## Section 3.1:
+
+## Section 3.2:
+
+## Section 3.3:
+
+## Section 3.4:
+
+<ol>
+  <li><b>Exploring the relationship between sales and advertising budget:</b> Since there are three variables that make up advertising budget (TV, radio, and newspaper), a multiple linear regression model is used with TV, radio and newspaper as the predictors and sales as the response. An F-statistic can be used to test if $H_0: \beta_{TV} = \beta_{radio} = \beta_{newspaper} = 0$. For this dataset, the pvalue was low providing significant evidence of the relationship between sales and advertising budget.</li>
+  <li><b>Strenght of the relationship:</b>RSE which estimates the standard deviation of the response (in this case the sales) between the population regression line; and, $R^2$ which is the percentage of variability of the response explained by the predictors are two good measures for the strength of a relationship between response and predictors. </li>
+  <li><b>Which media are association with sales?:</b> Individual pvalues of the predictors can be viewed to identify the significance of any individual predictor to the response.</li>
+  <li><b>How large is the association between each medium and sales?:</b> Constructing confidence intervals for the individual $\hat{\beta}$ coefficients is a good way to go about measure the size of association between the predictors and the response. If the confidence interval includes 0, then it may suggest a predictor has non- significant impact on the response. However, collinearity could be an issue which results in large confidence bounds. VIF scores can be viewed to ensure collinearity is not an issue. Another technique to identify individual relationships between the predictors and response is to perform simple linear regression models between each predictor and response and identify size of association. </li>
+  <li><b>How accurately can we predict future sales?:</b> If we are interested in an individual response then we can use a prediction interval, but if interested in an average response we can use a confidence interval. The bounds for prediction intervals are always wider then confidence intervals due to taking into account irreducible error.</li>
+  <li><b>Is the relationship linear?:</b> A residual diagnostic plot can be used to identify linearity. We expect no pattern (centered at 0) among the residuals if the relationship is linear. Transformations can be used if patterns are found.</li>
+  <li><b>Is there synergy among the advertising media?:</b>Interactions among variables should be explored.</li>
+</ol>
+
+## Section 3.5: Comparison of Linear Regression with K-Nearest Neighbors
+
+Linear regression is a parametric method due to its linearity assumption. The advantage to parametric methods is they are easy to fit because of the small number of parameters to estimate, tests for significance are easy to perform, and interpretation is usually clear. The disadvantage of parametric methods are their strong assumptions. If the true model deviates from our assumed model, then the results will be poor. 
+
+Non- parametric methods do not have assumptions of the model form and are generally more flexible then parametric methods. 
+
+### KNN Regression:
+Is very similar to KNN classifier (but for when the response is continuous) in that the model will identify the K closest points to a point of prediction (denoted as $N_0$) and averages those to form the prediction. 
+
+$$\hat{f}(x_0) = \frac{1}{K}\sum_{x_i \in N_0} y_i$$
+The best value of K is based on the bias- variance trade off. Smaller K will have lower bias but higher variance whereas larger values of K will have higher bias but lower variance. KNN can suffer from the curse of dimensionality where in higher dimensions, the K observations closest to the point of prediction may be very off.
+
+In the choice between parametric or non- parametric methods, if the true form of the relationship matches the parametric models assumptions, then it will outperform the non- parametric method. 
+
+"In general, parametric methods will tend to outperform non- parametric approaches when there is a small number of observations per predictor".

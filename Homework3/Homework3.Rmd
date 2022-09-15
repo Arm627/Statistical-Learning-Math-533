@@ -194,6 +194,7 @@ model.combos(lm, "area", c("temp","RH","wind","rain"), train, val, TRUE, FALSE)
 #lm(y ~ x1 + x2 + x3 + x4)
 ```
 
+
 ```{r}
 # Run the function above multiple times to showcase based on different train/ test splits, the output combination of models is different (ie. the predictor variables used may not be relevant (according to this model) to the response)
 
@@ -232,6 +233,8 @@ Here's a test change
 
 
 Here's a second test show uwu
+=======
+
 
 # Chapter 3 Summary:
 ## Section 3.1:
@@ -240,11 +243,95 @@ Here's a second test show uwu
 
 ## Section 3.3:
 
+To incorporate qualitative predictors of only two levels, we can use an indicator or dummy variable that takes on two possible numerical values e.g. 0 and 1. For example, consider a regression model based only on one 2 level qualitative predictor. We have
+$$
+x_i = 
+\begin{cases} 1 &\text{if } i \text{th person owns a house} \\
+0 &\text{if } i\text{th person does not own a house},
+\end{cases}
+$$
+and therefore, the model is given by
+$$
+y_i = \beta_0 + \beta_1x_i + \epsilon_i = \begin{cases} \beta_0 + \beta_1 + \epsilon_i &\text{if } i \text{th person owns a house} \\
+\beta_0 + \epsilon_i &\text{if } i\text{th person does not own a house},
+\end{cases}.
+$$
+This is also known as one-hot encoding. The encoding is arbitrary, and we could also flip the 0 and 1 encoding or use a 1 and -1 encoding. The only difference is the interpretation of the coefficients. 
+When a qualitative predictor has more than two levels, a single dummy variable cannot represent all possible values, so we create additional dummy variables until there are 1 fewer dummy variables than the total amount of factors. The level with no dummy variable is known as the baseline. Again, the baseline level is chosen arbitrarily, and the final predictions will be the same regardless of the choice of baseline. The coefficients and their p-values do depend on the choice of coding, however. We can use and F-test to test $H_0: \beta_1 = \beta_2 = 0$, which does not depend on the coding. 
+
+We can use a dummy variable approach even when incorporating both quantitative and qualitative predictors. 
+
+The standard linear regression model provides interpretable results, but makes several highly restrictive assumptions that are often violated in practice. Two of the most important are that the relationship between predictors and response are additive and linear, i.e. that the association between predictor $X_j$ and the response $Y$ does not depend on the values of the other predictors, and that the change in the response $Y$ associated with a one-unit change in $X_j$ is constant, regardless of the value of $X_j$. 
+
+One way to extend the standard linear regression model (with two variables for example) is to include a third predictor, called an interaction term, which is constructed by computing the product of $X_1$ and $X_2$, which results in the model
+$$
+Y = \beta_0 + \beta_1X_1 + \beta_2X_2 + \beta_3X_1X_2 + \epsilon.
+$$
+Note that this can be rewritten as
+$$
+Y = \beta_0 + \tilde{\beta}_1X_1 + \beta_2 X_2 + \epsilon,
+$$
+where $\tilde{\beta}_1 = \beta_1 + \beta_3X_2$. Hence the association between $X_1$ and $Y$ is no longer constant. 
+
+The hierarchical principle sates that if we include an interaction in a model, we should also include the main effects, even if the p-values associated with their coefficients are not significant. $X_1 \times X_2$ is typically correlated with $X_1$ and $X_2$, so leaving them out tends to alter the meaning of the interaction. 
+
+In some cases, the true relationship between the response and the predictors may be non-linear. A simple way to directly extend the linear model to accommodate non-linear relationships is to use polynomial regression. A simple approach for incorporating non-linear associations in a linear model is to include transformed versions of the predictors, i.e. 
+$$
+Y = \beta_0 + \beta_1X_1 + \beta_2X_2^2 + \epsilon.
+$$
+This is still a linear model with respect to the $\beta$ parameters. This approach is known as polynomial regression since we have included polynomial functions of the predictors in the regression model.
+
+There are a few common problems that occur when fitting a linear regression model:
+
+1. Non-linearity of the response-predictor relationships
+
+    The linear regression model assumes a straight-line relationship between the predictors and the response. If the true relationship isn't linear, then the conclusions drawn from a linear model are suspect, and the prediction accuracy can be poor. Residual plots are useful visual tools to identify non-linearity. We can plot the residuals $e_i = y_i -\hat{y}_i$, versus the predictor $x_i$ or in the multiple regression case, we instead plot the residuals versus the predicted values $\hat{y}_i$. Ideally, the residual plot will show no pattern. If it does, it may indicate a problem with the linear model. If the residual plot indicates a non-linear association, a simple approach is to use non-linear transformations of the predictors, such as $\log X, \sqrt{X},$ and $X^2$ in the model. 
+
+2. Correlation of error terms
+
+    The linear regression model assumes the error terms $\epsilon_1, \epsilon_2, \dots, \epsilon_n$ are uncorrelated since if there is a correlation, the estimated standard errors will tend to underestimate the true standard errors. As a result, confidence and prediction intervals and will be narrower than they should be and p-values may be lower than they should be. 
+    
+    Such correlations frequently occur in the context of time series data, which consists of observations for which measurements are obtained at discrete points in time. Observations that are obtained at adjacent time points will have positively correlated errors in many cases. To determine this, we can use a residual plot as a function of time. If the errors are uncorrelated, there should be no pattern, but if they are positively correlated, there may be tracking in the residuals, i.e. adjacent residuals may have similar values. 
+    
+    Correlation among the error terms can also occur outside of time series data. The assumption of uncorrelated errors is extremely important for linear regression and for other statistical methods. Good experimental design is crucial to mitigate the risk. 
+    
+3. Non-constant variance of error terms
+    
+    Standard errors, confidence intervals, and hypothesis tests associated with the linear model rely upon the assumption of constant variance, $Var(\epsilon_i) = \sigma^2$. It's often the case that the variances of the error terms are non-constant. One can identify non-constant variances in the errors from the presence of a funnel shape in the residual plot. One possible solution is to transform the response $Y$ using a concave function such as $\log Y$ or $\sqrt{Y}$ which leads to a greater amount of shrinkage of the larger responses, and hence a reduction in heteroscedasticity. If we have a good idea of the variance of each response, we can fit our model by weighted least squares with weights proportional to the inverse variances. 
+    
+4. Outliers
+
+    An outlier is a point for which $y_i$ is far from the value predicted by the model. Residual plots can be used to identify outliers, but it can be difficult to decide how large a residual needs to be before we consider the point to be an outlier. To address this, we can plot the studentized residuals, computed by dividing each residual $e_i$ by its estimated standard error. Observations whose studentized residuals are greater than 3 in absolute value are possible outliers. One solution is to simply remove the observation, but an outlier may also indicate a deficiency of the model. 
+    
+5. High-leverage points
+    
+    Observations with high leverage have an unusual value for $x_i$. High leverage observations tend to have a sizable impact on the estimated regression line. Any problems with high leverage points may invalidate the entire fit, so it is important to identify high leverage observations. 
+    
+    In a multiple linear regression, it is possible to have an observation that is well within the range of each individual predictor's values, but is unusual in terms of the full set of predictors. In order to quantify an observation's leverage, we compute the leverage statistic. For a simple linear regression, it is
+    $$
+    h_i = \frac{1}{n} + \frac{(x_i+\bar{x})^2}{\sum_{j=1}^n(x_{j}-\bar{x})^2}.
+    $$
+    The leverage statistic is always between $1/n$ and 1, and the average leverage for all the observations is always equal to (p+1)/n, so if an observation has a leverage statistic that greatly exceeds this, it may be a high leverage point.
+    
+6. Collinearity
+
+    Collinearity refers to the situation in which two or more predictor variables are closely related to one another. The presence of collinearity can pose problems in the regression context, since it can be difficult to separate out the individual effects of collinear variables on the response. 
+    
+    Since collinearity reduces the accuracy of the estimates of the regression coefficients, it causes the standard error for $\hat{\beta}_j$ to grow. As a result, if there is collinearity, we may fail to reject $H_0:\beta_j=0$. The power of the hypothesis test (the probability of correctly detecting a non-zero coefficient) is reduced by collinearity. 
+    
+    A simple way to detect collinearity is to look at the correlation matrix of the predictors. If there is an element that is large in absolute value, that indicates a pair of highly correlated variables. It is possible for collinearity to exist between three of more variables even if no pair of variables has a high correlation. This is called multicollinearity. A better way to assess multicollinearity is to compute the variance inflaction factor (VIF),
+  $$
+  VIF(\hat{\beta}_j) = \frac{1}{1-R^2_{X_j|X_{-j}}},
+  $$
+    where $R^2_{X_j|X_{-j}}$ is the $R^2$ from a regression of $X_j$ onto all of the other predictors. The VIF is the ratio of the variance of $\hat\beta_j$ when fitting the full model divided by the variance of $\hat\beta_j$ if fit on its own. As a rule of thumb, a value that exceeds 5 or 10 indicates a high amount of collinearity. 
+
+    There are two simple solutions, drop one of the problematic variables from the regression, or combine the collinear variables together into a single predictor. 
+
 ## Section 3.4:
 
 <ol>
   <li><b>Exploring the relationship between sales and advertising budget:</b> Since there are three variables that make up advertising budget (TV, radio, and newspaper), a multiple linear regression model is used with TV, radio and newspaper as the predictors and sales as the response. An F-statistic can be used to test if $H_0: \beta_{TV} = \beta_{radio} = \beta_{newspaper} = 0$. For this dataset, the pvalue was low providing significant evidence of the relationship between sales and advertising budget.</li>
-  <li><b>Strenght of the relationship:</b>RSE which estimates the standard deviation of the response (in this case the sales) between the population regression line; and, $R^2$ which is the percentage of variability of the response explained by the predictors are two good measures for the strength of a relationship between response and predictors. </li>
+  <li><b>Strength of the relationship:</b>RSE which estimates the standard deviation of the response (in this case the sales) between the population regression line; and, $R^2$ which is the percentage of variability of the response explained by the predictors are two good measures for the strength of a relationship between response and predictors. </li>
   <li><b>Which media are association with sales?:</b> Individual pvalues of the predictors can be viewed to identify the significance of any individual predictor to the response.</li>
   <li><b>How large is the association between each medium and sales?:</b> Constructing confidence intervals for the individual $\hat{\beta}$ coefficients is a good way to go about measure the size of association between the predictors and the response. If the confidence interval includes 0, then it may suggest a predictor has non- significant impact on the response. However, collinearity could be an issue which results in large confidence bounds. VIF scores can be viewed to ensure collinearity is not an issue. Another technique to identify individual relationships between the predictors and response is to perform simple linear regression models between each predictor and response and identify size of association. </li>
   <li><b>How accurately can we predict future sales?:</b> If we are interested in an individual response then we can use a prediction interval, but if interested in an average response we can use a confidence interval. The bounds for prediction intervals are always wider then confidence intervals due to taking into account irreducible error.</li>

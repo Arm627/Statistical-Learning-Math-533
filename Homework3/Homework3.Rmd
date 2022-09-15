@@ -40,10 +40,10 @@ fire <- fire %>% mutate(month = as.factor(month),
 ```{r}
 # Response area (multiple regression)
 lm.fit <- lm(area ~ ., data = fire )
-summary(lm.fit)
+#summary(lm.fit)
 
-par(mfrow=c(2,2))
-plot(lm.fit)
+#par(mfrow=c(2,2))
+#plot(lm.fit)
 
 # Response area (multiple regression) (Transformed Model)
 lm.fit.transformed <- lm(log(area + 1) ~ ., data = fire )
@@ -53,6 +53,8 @@ par(mfrow=c(2,2))
 plot(lm.fit.transformed)
 ```
 
+
+**In general, the individual predictor variable effects the response (area) by leaving all else constant, a one unit increase in that predictor, effects the response (area) by its coefficient estimate. For example: monthaug, leaving all else constant, with a one unit increase in monthaug will increase the area by 0.3274391.**
 
 ```{r}
 # Predict using LM for rows 15-25 and report MSE:
@@ -81,6 +83,9 @@ fire <- fire %>%
 glm.fit <- glm(binary_area ~ ., family = "binomial", data = fire %>% select(-area))
 summary(glm.fit)
 ```
+
+
+**In general, the individual predictor variable effects the response (area) by leaving all else constant, a one unit increase in that predictor, effects the response (area) by its coefficient estimate. For example: wind, leaving all else constant, with a one unit increase in wind, will increase the log odds of area being non- zero by -0.08036**
 
 
 ```{r}
@@ -190,9 +195,43 @@ model.combos(lm, "area", c("temp","RH","wind","rain"), train, val, TRUE, FALSE)
 ```
 
 ```{r}
-step(lm(area ~ temp + RH + wind + rain, data = train))
+# Run the function above multiple times to showcase based on different train/ test splits, the output combination of models is different (ie. the predictor variables used may not be relevant (according to this model) to the response)
+
+library(hash)
+
+best.combinations.all <- hash()
+
+numIters <- 100
+numCombosMadeAsBest <- 0
+
+preds <- c("temp","RH","wind","rain", "area")
+
+for (i in 1:numIters) {
+  training_ind <- sample(1:517, floor(.8*517), replace = FALSE)
+
+  train <- fire2[training_ind, preds]
+  val <- fire2[-training_ind, preds]
+  res <- model.combos(lm, "area", c("temp","RH","wind","rain"), train, val, TRUE, FALSE)
+  
+  combo <- paste(res$Best.Combination, collapse=" ")
+  if (is.null(best.combinations.all[[combo]])) {
+    best.combinations.all[[combo]] <- TRUE
+    numCombosMadeAsBest = numCombosMadeAsBest + 1
+  }
+}
+
+print(paste("There are", numCombosMadeAsBest, "combos of predictors that were selected as the best out of", 2^(length(preds)-1), "possible combinations"))
 ```
 
+
+```{r}
+step(lm(area ~ temp + RH + wind + rain, data = train))
+```
+=======
+Here's a test change
+
+
+Here's a second test show uwu
 
 # Chapter 3 Summary:
 ## Section 3.1:

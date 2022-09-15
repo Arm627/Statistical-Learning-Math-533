@@ -67,8 +67,8 @@ MSE
 MSE.transformed <- mean(unlist((pred.transformed - actual)^2))
 MSE.transformed
 
-plot(pred, unlist(actual))
-plot(pred.transformed, unlist(actual))
+#plot(pred, unlist(actual))
+#plot(pred.transformed, unlist(actual))
 ```
 
 
@@ -84,12 +84,16 @@ summary(glm.fit)
 
 
 ```{r}
-set.seed(123)
+fire2 <- fire %>% mutate(area = log1p(area))
+```
+
+```{r}
+#set.seed(123)
 
 training_ind <- sample(1:517, floor(.8*517), replace = FALSE)
 
-train <- fire[training_ind, c("temp","RH","wind","rain", "area")]
-val <- fire[-training_ind, c("temp","RH","wind","rain", "area")]
+train <- fire2[training_ind, c("temp","RH","wind","rain", "area")]
+val <- fire2[-training_ind, c("temp","RH","wind","rain", "area")]
 
 model.combos <- function(model, 
                          response, 
@@ -185,6 +189,9 @@ model.combos(lm, "area", c("temp","RH","wind","rain"), train, val, TRUE, FALSE)
 #lm(y ~ x1 + x2 + x3 + x4)
 ```
 
+```{r}
+step(lm(area ~ temp + RH + wind + rain, data = train))
+```
 
 
 # Chapter 3 Summary:

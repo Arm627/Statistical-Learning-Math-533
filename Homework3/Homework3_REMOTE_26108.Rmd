@@ -7,7 +7,6 @@ output: pdf_document
 
 ```{r setup, include=FALSE} 
 knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
-set.seed(123)
 ```
 
 
@@ -18,7 +17,7 @@ library(knitr)
 fire <- read.csv("data/forestfires.csv")
 ```
 
-## 2 Forest Fires
+
 ```{r}
 head(fire)
 ```
@@ -30,197 +29,212 @@ kable(summary(fire %>% select(X, Y, month, day, FFMC, DC, ISI)))
 kable(summary(fire %>% select(temp, RH, wind, rain, area, DMC)))
 ```
 
-(a)
-    ```{r, fig.show="hold", out.width="50%"}
-    fire <- fire %>% mutate(month = as.factor(month),
-                    day = as.factor(day))
-    # Response area (multiple regression)
-    lm.fit <- lm(area ~ ., data = fire )
-    
-    
-    # Response area (multiple regression) (Transformed Model)
-    lm.fit.transformed <- lm(log(area + 1) ~ ., data = fire )
-    
-    kable(lm.fit.transformed$coefficients)
-    
-    plot(lm.fit.transformed)
-    ```
-    
-    
-    
-    Based on the residual plot, this model seems to be a poor model. The residual vs fit plot shows a trend in predictions, normality doesn't seem to met especially at the tails, the scale location plot provides evidence for non- constant variance and some points are higher in leverage.
+
+## 2a
+```{r}
+fire <- fire %>% mutate(month = as.factor(month),
+                day = as.factor(day))
+```
+```{r}
+# Response area (multiple regression)
+lm.fit <- lm(area ~ ., data = fire )
+#summary(lm.fit)
+
+#par(mfrow=c(2,2))
+#plot(lm.fit)
+
+# Response area (multiple regression) (Transformed Model)
+lm.fit.transformed <- lm(log(area + 1) ~ ., data = fire )
+#summary(lm.fit.transformed)
+
+kable(lm.fit.transformed$coefficients)
+
+par(mfrow=c(2,2))
+plot(lm.fit.transformed)
+```
 
 
 
-    In general, the individual predictor variable effects the response (area) by leaving all else constant, a one unit increase in that predictor, effects the response (area) multiplicatively by $e^{\beta_i}$. For example: monthaug, leaving all else constant, if the month is august, will multiplicativly increase the area by $e^{0.3274391}$. Another example: ISI, leaving all else constant, a one unit increase in ISI will decrease area by a factor of $e^{0.0147970}$.
+Based on the residual plot, this model seems to be a poor model. The residual vs fit plot shows a trend in predictions, normality doesn't seem to met especially at the tails, the scale location plot provides evidence for non- constant variance and some points are higher in leverage.
 
 
-(b)
-    ```{r}
-    # Binary area
-    fire <- fire %>% 
-      mutate(binary_area = if_else(area != 0, "Not zero", "Zero")) %>% 
-      mutate(binary_area = as.factor(binary_area))
-    
-    glm.fit <- glm(binary_area ~ ., family = "binomial", data = fire %>% select(-area))
-    
-    kable(glm.fit$coefficients)
-    ```
+
+$$
+log(y + 1) = \beta_0 + \beta_1x_1 + \cdots + \beta_nx_n\\
+y = e^{\beta_0}e^{\beta_1x_1}\cdots e^{\beta_nx_n} - 1
+$$
+
+In general, the individual predictor variable effects the response (area) by leaving all else constant, a one unit increase in that predictor, effects the response (area) multiplicativly by $e^{\beta_i}$. For example: monthaug, leaving all else constant, if the month is august, will multiplicativly increase the area by $e^{0.3274391}$. Another example: ISI, leaving all else constant, a one unit increase in ISI will decrease area by $e^{0.0147970}$.
 
 
-    In general, the individual predictor variable effects the response (area) by leaving all else constant, a one unit increase in that predictor, effects the response (area) by its coefficient estimate. For example: wind, leaving all else constant, with a one unit increase in wind, will increase the log odds of area being non- zero by -0.08036.
+## 2b
+```{r}
+# Binary area
+fire <- fire %>% 
+  mutate(binary_area = if_else(area != 0, "Not zero", "Zero")) %>% 
+  mutate(binary_area = as.factor(binary_area))
 
-(c)
-    ```{r}
-    # Predict using LM for rows 15-25 and report MSE:
-    
-    pred <- predict(lm.fit, newdata = fire[15:25,])
-    pred.transformed <- predict(lm.fit.transformed, newdata = fire[15:25,])
-    
-    actual <- fire[15:25,] %>% select(area)
-    
-    MSE <- mean(unlist((pred - actual)^2))
+glm.fit <- glm(binary_area ~ ., family = "binomial", data = fire %>% select(-area))
+
+kable(glm.fit$coefficients)
+```
+
+
+**In general, the individual predictor variable effects the response (area) by leaving all else constant, a one unit increase in that predictor, effects the response (area) by its coefficient estimate. For example: wind, leaving all else constant, with a one unit increase in wind, will increase the log odds of area being non- zero by -0.08036**
+
+## 2c
+```{r}
+# Predict using LM for rows 15-25 and report MSE:
+
+pred <- predict(lm.fit, newdata = fire[15:25,])
+pred.transformed <- predict(lm.fit.transformed, newdata = fire[15:25,])
+
+actual <- fire[15:25,] %>% select(area)
+
+MSE <- mean(unlist((pred - actual)^2))
+MSE
+MSE.transformed <- mean(unlist((pred.transformed - actual)^2))
+MSE.transformed
+```
+
+
+## 2d
+
+```{r}
+fire2 <- fire %>% mutate(area = log1p(area))
+```
+
+```{r}
+#set.seed(123)
+
+training_ind <- sample(1:517, floor(.8*517), replace = FALSE)
+
+train <- fire2[training_ind, c("temp","RH","wind","rain", "area")]
+val <- fire2[-training_ind, c("temp","RH","wind","rain", "area")]
+
+model.combos <- function(model, 
+                         response, 
+                         predictors, 
+                         training, 
+                         validation, 
+                         null.model = TRUE,
+                         debug = FALSE) {
+  "This function iterates through all possible combos (2^n)-1 of 
+    predictor variables and outputs the model with the best validation 
     MSE
-    MSE.transformed <- mean(unlist((pred.transformed - actual)^2))
-    MSE.transformed
-    ```
-
-
-(d)
-
-    ```{r}
-    fire2 <- fire %>% mutate(area = log1p(area))
+  
+    Inputs:
+      - model: A supervised regression learning model object (ie. lm)
+          Expecting the function to have formula and data parameters
+      - response: A string. The name of the response variable
+      - predictors: A vector of strings. The list of names of the     
+          predictor variables
+      - training: A data frame. The training set
+      - validation: A data frame. The validation set
+      - null.model: A boolean. (Optional). If TRUE, will compare the initial best
+          model as the null model (which is just the average). If set to FALSE,
+          the intial best model will be null and only the (2^n)-1 combos will be           considered
+      - debug: A boolean. (Optional). If TRUE print out the best.MSE and 
+          best.predictions as they are being calculated
+      
+    Output:
+      - best.predictors: A list. Containing the names of the best 
+        predictors (as measured by lowest validation MSE)
+      - best.mse: A number. The best MSE among the models
+  "
+  # Combinations is made from this code: 
+  # https://stackoverflow.com/questions/40049313/generate-all-combinations-of-all-lengths-in-r-from-a-vector
+  # It generates the combinations of predictors as a list of strings
+  combinations <- do.call("c", lapply(seq_along(predictors), function(i) combn(predictors, i, FUN = list)))
+  
+  if (debug) {
+    print(combinations)
+  }
+  
+  # The validation response
+  actual <- validation[[response]]
+  
+  # If null.model is TRUE, compare to the null model (the average)
+  if (null.model) {
+    average.model <- mean(training[[response]])
+    best.MSE <- mean((average.model - actual)^2)
+    best.predictions <- c("null model")
     
-    training_ind <- sample(1:517, floor(.8*517), replace = FALSE)
-    
-    train <- fire2[training_ind, c("temp","RH","wind","rain", "area")]
-    val <- fire2[-training_ind, c("temp","RH","wind","rain", "area")]
-    
-    model.combos <- function(model, 
-                             response, 
-                             predictors, 
-                             training, 
-                             validation, 
-                             null.model = TRUE,
-                             debug = FALSE) {
-      "This function iterates through all possible combos (2^n)-1 of 
-        predictor variables and outputs the model with the best validation 
-        MSE
-      
-        Inputs:
-          - model: A supervised regression learning model object (ie. lm)
-              Expecting the function to have formula and data parameters
-          - response: A string. The name of the response variable
-          - predictors: A vector of strings. The list of names of the     
-              predictor variables
-          - training: A data frame. The training set
-          - validation: A data frame. The validation set
-          - null.model: A boolean. (Optional). If TRUE, will compare the initial best
-              model as the null model (which is just the average). If set to FALSE,
-              the intial best model will be null and only the (2^n)-1 combos will be 
-              considered
-          - debug: A boolean. (Optional). If TRUE print out the best.MSE and 
-              best.predictions as they are being calculated
-          
-        Output:
-          - best.predictors: A list. Containing the names of the best 
-            predictors (as measured by lowest validation MSE)
-          - best.mse: A number. The best MSE among the models
-      "
-      # Combinations is made from this code: 
-      # https://stackoverflow.com/questions/40049313/generate-all-combinations-of-all-
-      #lengths-in-r-from-a-vector
-      # It generates the combinations of predictors as a list of strings
-      combinations <- do.call("c", lapply(seq_along(predictors), 
-                                  function(i) combn(predictors, i, FUN = list)))
-      
-      if (debug) {
-        print(combinations)
-      }
-      
-      # The validation response
-      actual <- validation[[response]]
-      
-      # If null.model is TRUE, compare to the null model (the average)
-      if (null.model) {
-        average.model <- mean(training[[response]])
-        best.MSE <- mean((average.model - actual)^2)
-        best.predictions <- c("null model")
-        
-        if (debug) {
-          print(best.MSE)
-          print("null")
-        }
-      }
-      # If null.model is FALSE, compare only the (2^n)-1 models
-      else {
-        best.MSE <- NA
-        best.predictions <- NA
-      }
-      
-      
-      # Loop through the combinations
-      for (combo in combinations) {
-        # Make the formula from the combos and the response
-        formula <- reformulate(combo, response = response)
-        # Fit the model using the given model and training data
-        model.fit <- model(formula = formula, data = training)
-        # Make predictions on the validation set
-        preds <- predict(model.fit, newdata = validation)
-        # Calculate validation MSE using the predictions
-        MSE.validation <- mean(unlist((preds - actual)^2))
-        # Update the best.predictions if the MSE is lower then the prior 
-          # best
-        if (debug) {
-          print(MSE.validation)
-          print(combo)
-        }
-        
-        if (is.na(best.MSE) || MSE.validation < best.MSE) {
-          best.MSE <- MSE.validation
-          best.predictions <- combo
-        }
-      }
-      
-      # Return best.MSE and best.predictions
-      return(list(Best.MSE = best.MSE, Best.Combination = best.predictions))
+    if (debug) {
+      print(best.MSE)
+      print("null")
+    }
+  }
+  # If null.model is FALSE, compare only the (2^n)-1 models
+  else {
+    best.MSE <- NA
+    best.predictions <- NA
+  }
+  
+  
+  # Loop through the combinations
+  for (combo in combinations) {
+    # Make the formula from the combos and the response
+    formula <- reformulate(combo, response = response)
+    # Fit the model using the given model and training data
+    model.fit <- model(formula = formula, data = training)
+    # Make predictions on the validation set
+    preds <- predict(model.fit, newdata = validation)
+    # Calculate validation MSE using the predictions
+    MSE.validation <- mean(unlist((preds - actual)^2))
+    # Update the best.predictions if the MSE is lower then the prior 
+      # best
+    if (debug) {
+      print(MSE.validation)
+      print(combo)
     }
     
-    model.combos(lm, "area", c("temp","RH","wind","rain"), 
-                 train, val, TRUE, FALSE)
-    ```
-
-
-    ```{r}
-    # Run the function above multiple times to showcase based on different train/ 
-    # test splits, the output combination of models is different (ie. the predictor 
-    # variables used may not be relevant (according to this model) to the response)
-    
-    library(hash)
-    
-    best.combinations.all <- hash()
-    
-    numIters <- 100
-    numCombosMadeAsBest <- 0
-    
-    preds <- c("temp","RH","wind","rain", "area")
-    
-    for (i in 1:numIters) {
-      training_ind <- sample(1:517, floor(.8*517), replace = FALSE)
-    
-      train <- fire2[training_ind, preds]
-      val <- fire2[-training_ind, preds]
-      res <- model.combos(lm, "area", c("temp","RH","wind","rain"), train, val, TRUE, FALSE)
-      
-      combo <- paste(res$Best.Combination, collapse=" ")
-      if (is.null(best.combinations.all[[combo]])) {
-        best.combinations.all[[combo]] <- TRUE
-        numCombosMadeAsBest = numCombosMadeAsBest + 1
-      }
+    if (is.na(best.MSE) || MSE.validation < best.MSE) {
+      best.MSE <- MSE.validation
+      best.predictions <- combo
     }
-    ```
-    There are `r numCombosMadeAsBest` combos of predictors that were selected as the best out of `r 2^(length(preds)-1)` possible combinations.
-    
+  }
+  
+  # Return best.MSE and best.predictions
+  return(list(Best.MSE = best.MSE, Best.Combination = best.predictions))
+}
+
+model.combos(lm, "area", c("temp","RH","wind","rain"), train, val, TRUE, FALSE)
+
+#lm(y ~ x1 + x2)
+#lm(y ~ x1 + x4 + x3)
+#lm(y ~ x1 + x2 + x3 + x4)
+```
+
+
+```{r}
+# Run the function above multiple times to showcase based on different train/ test splits, the output combination of models is different (ie. the predictor variables used may not be relevant (according to this model) to the response)
+
+library(hash)
+
+best.combinations.all <- hash()
+
+numIters <- 100
+numCombosMadeAsBest <- 0
+
+preds <- c("temp","RH","wind","rain", "area")
+
+for (i in 1:numIters) {
+  training_ind <- sample(1:517, floor(.8*517), replace = FALSE)
+
+  train <- fire2[training_ind, preds]
+  val <- fire2[-training_ind, preds]
+  res <- model.combos(lm, "area", c("temp","RH","wind","rain"), train, val, TRUE, FALSE)
+  
+  combo <- paste(res$Best.Combination, collapse=" ")
+  if (is.null(best.combinations.all[[combo]])) {
+    best.combinations.all[[combo]] <- TRUE
+    numCombosMadeAsBest = numCombosMadeAsBest + 1
+  }
+}
+
+print(paste("There are", numCombosMadeAsBest, "combos of predictors that were selected as the best out of", 2^(length(preds)-1), "possible combinations"))
+```
 
 
 
@@ -382,7 +396,7 @@ There are a few common problems that occur when fitting a linear regression mode
   <li><b>Is there synergy among the advertising media?:</b>Interactions among variables should be explored.</li>
 </ol>
 
-## Section 3.5:
+## Section 3.5: Comparison of Linear Regression with K-Nearest Neighbors
 
 Linear regression is a parametric method due to its linearity assumption. The advantage to parametric methods is they are easy to fit because of the small number of parameters to estimate, tests for significance are easy to perform, and interpretation is usually clear. The disadvantage of parametric methods are their strong assumptions. If the true model deviates from our assumed model, then the results will be poor. 
 
@@ -398,90 +412,50 @@ In the choice between parametric or non- parametric methods, if the true form of
 
 "In general, parametric methods will tend to outperform non- parametric approaches when there is a small number of observations per predictor".
 
-<<<<<<< HEAD
-
-
-## 4 ISLR Problems
-
-3.8
-
-(a) We use the `lm()` function to perform a simple linear regression with `mpg` as the response and `horsepower` as the predictor.
-
-    ```{r}
-    Auto <- ISLR::Auto
-    
-    model <- lm(mpg ~ horsepower, data = Auto)
-    
-    summary <- summary(model)
-    
-    CI <- predict(model,newdata = data.frame(horsepower = 98),interval = "confidence")
-    PI <- predict(model,newdata = data.frame(horsepower = 98),interval = "prediction")
-    
-    results <- round(summary$coefficients,5)
-    results[,"Pr(>|t|)"] <- c("<2e-16","<2e-16") # originally 1.220362e-187, 7.031989e-81
-    
-    knitr::kable(results)
-    ```
-    The model does indicate that there is a weak negative relationship between `mpg` and `horsepower`. In particular, for every unit increase in `horsepower`, we only see a 0.157 decrease in `mpg`. The predicted `mpg` associated with a horsepower of 98 is `r round(CI[,"fit"],3)`, with confidence interval $[`r round(CI[,"lwr"],3)`, `r round(CI[,"upr"],3)`]$ and prediction interval $[`r round(PI[,"lwr"],3)`, `r round(PI[,"upr"],3)`]$.
-
-(b) We plot the response against the predictor and use `abline()` to display the least squares regression line
-
-    ```{r}
-    plot(Auto$horsepower, Auto$mpg, xlab = "Horsepower", ylab = "MPG")
-    abline(coef = model$coefficients, col = "red")
-    
-    ```
-
-(c) We use the `plot()` function to produce the diagnostic plots of the least squares regression fit. 
-    ```{r, fig.show="hold", out.width="50%"}
-    plot(model)
-    ```
-    We notice an upward curve in the residual vs fit plot, suggesting a non-linear relationship between the predictor and the response, which we can also see in the above plot of the data. The Scale-location plot is also curved upward, further suggesting non-linearity and non-constant variance in the residuals. 
-
-
-3.9
-
+## Problem 3.9
+\
 (a) Produce a scatterplot matrix which includes all of the variables in the data set
-    ```{r}
-    library(ISLR)
-    pairs(Auto)
-    ```
-
+```{r}
+library(ISLR)
+pairs(Auto)
+```
+\
 (b) Compute the matrix of correlations between the variables using the function cor(). You will need to exclude the name variable, which is qualitative.
-    ```{r}
-    cor(subset(Auto, select = -name))
-    ```
-
+```{r}
+cor(subset(Auto, select = -name))
+```
+\
 (c) Use the lm() function to perform a multiple linear regression with mpg as the response and all other variables except name as the predictors. Use the summary() function to print the results.
-    ```{r}
-    mlr = lm(mpg ~ . - name, data = Auto)
-    summary(mlr)
-    ```
+```{r}
+mlr = lm(mpg ~ . - name, data = Auto)
+summary(mlr)
+```
+\
+Both F-statistic and p-value's value provide evidence against the null hypothesis. As a result, we can conclud there is a relationship between the predictors and the response. 
+Based on the p-value, displacement, weight, year, and origin have a statistically significant relationship to the response.
+The estimate coefficient for year is 0.750773, which indicate the mpg goes up 0.750773 per year. 
 
-    Both F-statistic and p-value's value provide evidence against the null hypothesis. As a result, we can conclud there is a relationship between the predictors and the response. 
-    Based on the p-value, displacement, weight, year, and origin have a statistically significant relationship to the response.
-    The estimate coefficient for year is 0.750773, which indicate the mpg goes up 0.750773 per year. 
-
-
+\
 (d) Use the plot() function to produce diagnostic plots of the linear regression fit. 
-
-    By the residual plot, we can conclude the data is the model is not fit well since there is non-linear pattern showing. Also, scale-location plot show there is no point located outside of range [-2,2], which indicates there may be no outliers. Point 14 is the high leverage point. 
-    ```{r, fig.show="hold", out.width="50%"}
-    plot(mlr)
-    ```
-
+\
+By the residual plot, we can conclude the data is the model is not fit well since there is non-linear pattern showing. Also, scale-location plot show there is no point located outside of range [-2,2], which indicates there may be no outliers. Point 14 is the high leverage point. 
+```{r}
+par(mfrow = c(2, 2))
+plot(mlr)
+```
+\
 (e) Use the * and : symbols to fit linear regression models with interaction effects. 
-
-    Cylinders * weight is statistically significant, whereas displacement * acceleration is not. 
-    ```{r}
-    mlr.new <-  lm(mpg ~ displacement * acceleration + cylinders * weight, data = Auto)
-    summary(mlr.new)
-    ```
-
+\
+Cylinders * weight is statistically significant, whereas displacement * acceleration is not. 
+```{r}
+mlr.new <-  lm(mpg ~ displacement * acceleration + cylinders * weight, data = Auto)
+summary(mlr.new)
+```
+\
 (f) Try a few different transformations of the variables.
-
-    The log(cylinders) transformation is more significant than cylinders, but the sqrt(acceleration) is less significant than acceleration. We assume that is depend on the variables selection. 
-    ```{r}
-    summary(lm(mpg ~ . - name + log(cylinders), data=Auto))
-    summary(lm(mpg ~ . - name + sqrt(acceleration), data=Auto))
-    ```
+\
+The log(cylinders) transformation is more significant than cylinders, but the sqrt(acceleration) is less significant than acceleration. We assume that is depend on the variables selection. 
+```{r}
+summary(lm(mpg ~ . - name + log(cylinders), data=Auto))
+summary(lm(mpg ~ . - name + sqrt(acceleration), data=Auto))
+```

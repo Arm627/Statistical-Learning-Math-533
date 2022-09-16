@@ -13,7 +13,7 @@ knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 ```{r}
 library(tidyverse)
 library(ggplot2)
-library(GGally)
+library(knitr)
 fire <- read.csv("data/forestfires.csv")
 ```
 
@@ -24,15 +24,13 @@ head(fire)
 
 
 ```{r}
-str(fire)
+kable(summary(fire %>% select(X, Y, month, day, FFMC, DC, ISI)))
 
-summary(fire)
+kable(summary(fire %>% select(temp, RH, wind, rain, area, DMC)))
 ```
 
-```{r}
-#ggpairs(fire)
-```
 
+## 2a
 ```{r}
 fire <- fire %>% mutate(month = as.factor(month),
                 day = as.factor(day))
@@ -47,15 +45,44 @@ lm.fit <- lm(area ~ ., data = fire )
 
 # Response area (multiple regression) (Transformed Model)
 lm.fit.transformed <- lm(log(area + 1) ~ ., data = fire )
-summary(lm.fit.transformed)
+#summary(lm.fit.transformed)
+
+kable(lm.fit.transformed$coefficients)
 
 par(mfrow=c(2,2))
 plot(lm.fit.transformed)
 ```
 
 
-**In general, the individual predictor variable effects the response (area) by leaving all else constant, a one unit increase in that predictor, effects the response (area) by its coefficient estimate. For example: monthaug, leaving all else constant, with a one unit increase in monthaug will increase the area by 0.3274391.**
 
+Based on the residual plot, this model seems to be a poor model. The residual vs fit plot shows a trend in predictions, normality doesn't seem to met especially at the tails, the scale location plot provides evidence for non- constant variance and some points are higher in leverage.
+
+
+
+$$
+log(y + 1) = \beta_0 + \beta_1x_1 + \cdots + \beta_nx_n\\
+y = e^{\beta_0}e^{\beta_1x_1}\cdots e^{\beta_nx_n} - 1
+$$
+
+In general, the individual predictor variable effects the response (area) by leaving all else constant, a one unit increase in that predictor, effects the response (area) multiplicativly by $e^{\beta_i}$. For example: monthaug, leaving all else constant, if the month is august, will multiplicativly increase the area by $e^{0.3274391}$. Another example: ISI, leaving all else constant, a one unit increase in ISI will decrease area by $e^{0.0147970}$.
+
+
+## 2b
+```{r}
+# Binary area
+fire <- fire %>% 
+  mutate(binary_area = if_else(area != 0, "Not zero", "Zero")) %>% 
+  mutate(binary_area = as.factor(binary_area))
+
+glm.fit <- glm(binary_area ~ ., family = "binomial", data = fire %>% select(-area))
+
+kable(glm.fit$coefficients)
+```
+
+
+**In general, the individual predictor variable effects the response (area) by leaving all else constant, a one unit increase in that predictor, effects the response (area) by its coefficient estimate. For example: wind, leaving all else constant, with a one unit increase in wind, will increase the log odds of area being non- zero by -0.08036**
+
+## 2c
 ```{r}
 # Predict using LM for rows 15-25 and report MSE:
 
@@ -68,25 +95,10 @@ MSE <- mean(unlist((pred - actual)^2))
 MSE
 MSE.transformed <- mean(unlist((pred.transformed - actual)^2))
 MSE.transformed
-
-#plot(pred, unlist(actual))
-#plot(pred.transformed, unlist(actual))
 ```
 
 
-```{r}
-# Binary area
-fire <- fire %>% 
-  mutate(binary_area = if_else(area != 0, "Not zero", "Zero")) %>% 
-  mutate(binary_area = as.factor(binary_area))
-
-glm.fit <- glm(binary_area ~ ., family = "binomial", data = fire %>% select(-area))
-summary(glm.fit)
-```
-
-
-**In general, the individual predictor variable effects the response (area) by leaving all else constant, a one unit increase in that predictor, effects the response (area) by its coefficient estimate. For example: wind, leaving all else constant, with a one unit increase in wind, will increase the log odds of area being non- zero by -0.08036**
-
+## 2d
 
 ```{r}
 fire2 <- fire %>% mutate(area = log1p(area))
@@ -224,18 +236,6 @@ for (i in 1:numIters) {
 print(paste("There are", numCombosMadeAsBest, "combos of predictors that were selected as the best out of", 2^(length(preds)-1), "possible combinations"))
 ```
 
-
-```{r}
-step(lm(area ~ temp + RH + wind + rain, data = train))
-```
-=======
-Here's a test change
-
-
-Here's a second test show uwu
-
-Here's a test by Hk
-=======
 
 
 # Chapter 3 Summary:

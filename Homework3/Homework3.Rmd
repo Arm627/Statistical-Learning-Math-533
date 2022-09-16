@@ -412,6 +412,7 @@ In the choice between parametric or non- parametric methods, if the true form of
 
 "In general, parametric methods will tend to outperform non- parametric approaches when there is a small number of observations per predictor".
 
+\
 ## Problem 3.9
 \
 (a) Produce a scatterplot matrix which includes all of the variables in the data set

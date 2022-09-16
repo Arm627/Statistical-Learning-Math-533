@@ -7,6 +7,7 @@ output: pdf_document
 
 ```{r setup, include=FALSE} 
 knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+set.seed(123)
 ```
 
 
@@ -29,27 +30,17 @@ str(fire)
 summary(fire)
 ```
 
-```{r}
-#ggpairs(fire)
-```
-
-```{r}
+```{r, fig.show="hold", out.width="50%"}
 fire <- fire %>% mutate(month = as.factor(month),
                 day = as.factor(day))
-```
-```{r}
 # Response area (multiple regression)
 lm.fit <- lm(area ~ ., data = fire )
-#summary(lm.fit)
 
-#par(mfrow=c(2,2))
-#plot(lm.fit)
 
 # Response area (multiple regression) (Transformed Model)
 lm.fit.transformed <- lm(log(area + 1) ~ ., data = fire )
 summary(lm.fit.transformed)
 
-par(mfrow=c(2,2))
 plot(lm.fit.transformed)
 ```
 
@@ -68,9 +59,6 @@ MSE <- mean(unlist((pred - actual)^2))
 MSE
 MSE.transformed <- mean(unlist((pred.transformed - actual)^2))
 MSE.transformed
-
-#plot(pred, unlist(actual))
-#plot(pred.transformed, unlist(actual))
 ```
 
 
@@ -93,8 +81,6 @@ fire2 <- fire %>% mutate(area = log1p(area))
 ```
 
 ```{r}
-#set.seed(123)
-
 training_ind <- sample(1:517, floor(.8*517), replace = FALSE)
 
 train <- fire2[training_ind, c("temp","RH","wind","rain", "area")]
@@ -188,10 +174,6 @@ model.combos <- function(model,
 }
 
 model.combos(lm, "area", c("temp","RH","wind","rain"), train, val, TRUE, FALSE)
-
-#lm(y ~ x1 + x2)
-#lm(y ~ x1 + x4 + x3)
-#lm(y ~ x1 + x2 + x3 + x4)
 ```
 
 
@@ -228,12 +210,6 @@ print(paste("There are", numCombosMadeAsBest, "combos of predictors that were se
 ```{r}
 step(lm(area ~ temp + RH + wind + rain, data = train))
 ```
-=======
-Here's a test change
-
-
-Here's a second test show uwu
-=======
 
 
 # Chapter 3 Summary:
@@ -354,3 +330,42 @@ The best value of K is based on the bias- variance trade off. Smaller K will hav
 In the choice between parametric or non- parametric methods, if the true form of the relationship matches the parametric models assumptions, then it will outperform the non- parametric method. 
 
 "In general, parametric methods will tend to outperform non- parametric approaches when there is a small number of observations per predictor".
+
+
+
+## 4 ISLR Problems
+
+3.8
+
+(a) We use the `lm()` function to perform a simple linear regression with `mpg` as the response and `horsepower` as the predictor.
+
+    ```{r}
+    Auto <- ISLR::Auto
+    
+    model <- lm(mpg ~ horsepower, data = Auto)
+    
+    summary <- summary(model)
+    
+    CI <- predict(model,newdata = data.frame(horsepower = 98),interval = "confidence")
+    PI <- predict(model,newdata = data.frame(horsepower = 98),interval = "prediction")
+    
+    results <- round(summary$coefficients,5)
+    results[,"Pr(>|t|)"] <- c("<2e-16","<2e-16") # originally 1.220362e-187, 7.031989e-81
+    
+    knitr::kable(results)
+    ```
+    The model does indicate that there is a weak negative relationship between `mpg` and `horsepower`. In particular, for every unit increase in `horsepower`, we only see a 0.157 decrease in `mpg`. The predicted `mpg` associated with a horsepower of 98 is `r round(CI[,"fit"],3)`, with confidence interval $[`r round(CI[,"lwr"],3)`, `r round(CI[,"upr"],3)`]$ and prediction interval $[`r round(PI[,"lwr"],3)`, `r round(PI[,"upr"],3)`]$.
+
+(b) We plot the response against the predictor and use `abline()` to display the least squares regression line
+
+    ```{r}
+    plot(Auto$horsepower, Auto$mpg, xlab = "Horsepower", ylab = "MPG")
+    abline(coef = model$coefficients, col = "red")
+    
+    ```
+
+(c) We use the `plot()` function to produce the diagnostic plots of the least squares regression fit. 
+    ```{r, fig.show="hold", out.width="50%"}
+    plot(model)
+    ```
+    We notice an upward curve in the residual vs fit plot, suggesting a non-linear relationship between the predictor and the response, which we can also see in the above plot of the data. The Scale-location plot is also curved upward, further suggesting non-linearity and non-constant variance in the residuals. 

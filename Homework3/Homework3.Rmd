@@ -249,28 +249,29 @@ Y = \beta_{0} + \beta_{1} X
 $$
 If we had more than one predictors, we may need to use multiple linear regression for prediction:
 $$
-Y = \beta_{0} + \beta_{1} X_{1} + \beta_{2} X_{2} + \dots
+Y = \beta_{0} + \beta_{1} X_{1} + \beta_{2} X_{2} + \dots + \beta_{p} X_{p}
 $$
-\subsubsection{3.2.1 Estimating the Regression Coefficients}
+### {3.2.1 Estimating the Regression Coefficients}
 How do we estimate the coefficients of multiple linear regression? Similar to simple linear regression, we has below formula to make prediction:
 $$
 \hat{y} = \hat{\beta_{0}} + \hat{\beta_{1}} x_{1} + \hat{\beta_{2}} x_{2} + \dots + \hat{\beta_{p}} x_{p}
 $$
 To estimate the parameter of $\beta_{0}, \beta_{1}, \dots, \beta_{p}$, we use the same least squares approach for simple linear regression:
-\begin{align*}
-RSS &=\sum_{i=1}^{n} (y_{i} - \hat{y_{i}})^2 
-\\&=\sum_{i=1}^{n} (y_{i} - \hat{\beta_{0}} - \hat{\beta_{1}} x_{i1} - \hat{\beta_{2}} x_{i2} - \dots - \hat{\beta_{p}} x_{ip})^2
-\end{align*}
-\subsubsection{3.2.2 Some Important Questions}
+$$
+RSS 
+=\sum_{i=1}^{n} (y_{i} - \hat{y_{i}})^2 
+\\=\sum_{i=1}^{n} (y_{i} - \hat{\beta_{0}} - \hat{\beta_{1}} x_{i1} - \hat{\beta_{2}} x_{i2} - \dots - \hat{\beta_{p}} x_{ip})^2
+$$
+### {3.2.2 Some Important Questions}
 Answering below questions will help us to better understand multiple linear regression:
-\par
+\
 1. Is at least one of the predictors useful in predicting the response?
 This raise a new question: Is There a Relationship Between the Response and Predictors?
 We perform a hypothesis test to find out the relationship between the response and predictors:
-\begin{align*}
+$$
 H_{0}: \beta_{1} = \beta_{2} = \dots  = \beta_{p} = 0 \\
 H_{1}: \text{at least one } \beta_{i} \text{ is nonzero}
-\end{align*}
+$$
 This test is performed by computing the F-statistic, which allow us to determine the p-value. If there is no relationship between the response and predictors, we may expect the F-statistic to be close to 1.If there is a relationship, we may expect the F-statistic to be greater than 1. 
 $$
     F =
@@ -278,12 +279,12 @@ $$
 $$
 p-value would be more general than F-statistic for determine the relation between the response and predictors. To reject the null hypothesis, the p-values need to be less than 0.05 typically. 
 
-\par
+\
 2. Do all of the predictors help explain Y, or only a few of them?
 This raise a new question: how to decide on Important Variables?
 After computing the F-statistic and to examine the associated p-value, we use variable selection to determine the significance of predictors. There are three approaches for variable selection, which are forward selection, backward selection, and mixed selection. Forward selection begins with a model that contains no variable, then we start adding the most significant variables one after the other, at last, we will stop selection if it reach a point or until all the variables are selected. Backward selection begins with a model that contains all variables, then we start removing the least significant variables one after the other, at last, we will stop selection if it reach a point or until no variable is left. Mixed selection is a combination of forward and backward selection. 
 
-\par
+\
 3. How well does the model fit the data?
 This raise a new question: Is the Model Fit?
 Similar to the simple regression setting, we calculate RSE and $R^2$ to determine how well the model fits the data.
@@ -292,7 +293,7 @@ $$
 \\ \sqrt{\frac{RSS}{(n-p-1)}}
 $$
 
-\par
+\
 4. How accurate is our prediction?
 This raise a new question: How to assess prediction accuracy?
 We use confidence intervals to determine the error between $\hat{Y}$ and $f(X)$. And we use prediction intervals to the utmost extent reduce both reducible and irreducible error.

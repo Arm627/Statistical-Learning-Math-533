@@ -543,14 +543,14 @@ In the choice between parametric or non- parametric methods, if the true form of
     summary(mlr)
     ```
 
-    Both F-statistic and p-value's value provide evidence against the null hypothesis. As a result, we can conclud there is a relationship between the predictors and the response. 
+    Both F-statistic and p-value's value provide evidence against the null hypothesis. As a result, we can conclude there is a relationship between the predictors and the response. 
     Based on the p-value, displacement, weight, year, and origin have a statistically significant relationship to the response.
-    The estimate coefficient for year is 0.750773, which indicate the mpg goes up 0.750773 per year. 
+    The estimate coefficient for year is 0.750773, which indicates the mpg goes up 0.750773 per year. 
 
 
 (d) Use the plot() function to produce diagnostic plots of the linear regression fit. 
 
-    By the residual plot, we can conclude the data is the model is not fit well since there is non-linear pattern showing. Also, scale-location plot show there is no point located outside of range [-2,2], which indicates there may be no outliers. Point 14 is the high leverage point. 
+    By the residual plot, we can conclude the model is not fit well since there is a non-linear pattern showing. Also, scale-location plot shows there is no point located outside of the range [-2,2], which indicates there may be no outliers. Point 14 is the high leverage point. 
     ```{r, fig.show="hold", out.width="50%"}
     plot(mlr)
     ```
@@ -568,7 +568,7 @@ In the choice between parametric or non- parametric methods, if the true form of
 
 (f) Try a few different transformations of the variables.
 
-    The log(cylinders) transformation is more significant than cylinders, but the sqrt(acceleration) is less significant than acceleration. We assume that is depend on the variables selection. 
+    The log(cylinders) transformation is more significant than cylinders, but the sqrt(acceleration) is less significant than acceleration. We assume that is dependent on the variables selection. 
     ```{r}
     summary(lm(mpg ~ . - name + log(cylinders), data=Auto))
     summary(lm(mpg ~ . - name + sqrt(acceleration), data=Auto))
@@ -594,7 +594,7 @@ In the choice between parametric or non- parametric methods, if the true form of
 
 (d) We can reject the null hypothesis $H_0: \beta_j=0$ for the Price and USYes predictors; their p-values are near 0.  We fail to reject the null hypothesis for UrbanYes; with a p-value of 0.936, we have no significant evidence that the difference in sales based on the urban status of the store was not due to random chance.
 
-(e) We now fit a leaner model based only on Price and USYes predictors.
+(e) We now fit a linear model based only on Price and USYes predictors.
     ```{r}
     lm.fit2 <- lm(Sales ~ Price + US, data = Carseats)
     summary(lm.fit2)
@@ -616,7 +616,7 @@ In the choice between parametric or non- parametric methods, if the true form of
     plot(hatvalues(lm.fit2))
     ```
 
-    Although we did not observe outliers, we do now see evidence of a few unusually leverage observations.  We can identify the particular observation with the largest leverage statistic.
+    Although we did not observe outliers, we do now see evidence of a few unusually leveraged observations.  We can identify the particular observation with the largest leverage statistic.
     ```{r}
     which.max(hatvalues(lm.fit2))
     ```

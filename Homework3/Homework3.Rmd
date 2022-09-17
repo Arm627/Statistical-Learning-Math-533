@@ -7,6 +7,7 @@ output: pdf_document
 
 ```{r setup, include=FALSE} 
 knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+options(knitr.kable.NA = '')
 set.seed(123)
 ```
 
@@ -31,51 +32,52 @@ Then, to maximize this with respect to the vector $\boldsymbol\beta$, we can use
     $$
     \boldsymbol\beta_{m+1} = \boldsymbol\beta_m + \mathbf{I}^{-1}(\boldsymbol\beta_m)\nabla\ell(\boldsymbol\beta_m)
     $$
+    repeatedly until a desired amount of accuracy is achieved.
 
-
+\newpage
 ## 2 Forest Fires
-```{r}
+
+Below we have the first 6 rows of our data set. Note that we have 10 numerical predictors and 2 categorical predictors for the response `area`.
+```{r, echo=FALSE}
 library(tidyverse)
 library(ggplot2)
 library(knitr)
 fire <- read.csv("data/forestfires.csv")
+fire <- fire %>% mutate(month = as.factor(month),
+                    day = as.factor(day))
 kable(head(fire))
 ```
 
-
-```{r}
+Below, we show a few summary statistics for the data as well.
+```{r, echo=FALSE}
 kable(summary(fire %>% select(X, Y, month, day, FFMC, DC, ISI)))
 
 kable(summary(fire %>% select(temp, RH, wind, rain, area, DMC)))
 ```
 
-(a)
-    ```{r, fig.show="hold", out.width="50%"}
-    fire <- fire %>% mutate(month = as.factor(month),
-                    day = as.factor(day))
-    # Response area (multiple regression)
-    lm.fit <- lm(area ~ ., data = fire )
-    
-    
-    # Response area (multiple regression) (Transformed Model)
+(a) We fit a linear regression with `area` as the response with all other variables as predictors. Note that we use a log-transformed response for the model since the original data is heavily skewed toward 0.
+    ```{r, echo=1:2}
+    # Response area (multiple regression) (Log-Transformed Model)
     lm.fit.transformed <- lm(log(area + 1) ~ ., data = fire )
     
-    kable(lm.fit.transformed$coefficients)
-    
-    plot(lm.fit.transformed)
+    kable(list(lm.fit.transformed$coefficients[1:14],lm.fit.transformed$coefficients[15:28]), 
+              col.names = "Coefficient", booktabs = TRUE, caption = "Linear regression model coefficients")
     ```
     
     
-    
-    Based on the residual plot, this model seems to be a poor model. The residual vs fit plot shows a trend in predictions, normality doesn't seem to met especially at the tails, the scale location plot provides evidence for non- constant variance and some points are higher in leverage.
 
-
+    Based on the residual plots below, this model seems to be a poor model. The residual vs fit plot shows a trend in predictions, normality doesn't seem to be met especially at the tails, the scale location plot provides evidence for non- constant variance and some points are higher in leverage.
 
     In general, the individual predictor variable effects the response (area) by leaving all else constant, a one unit increase in that predictor, effects the response (area) multiplicatively by $e^{\beta_i}$. For example: monthaug, leaving all else constant, if the month is august, will multiplicativly increase the area by $e^{0.3274391}$. Another example: ISI, leaving all else constant, a one unit increase in ISI will decrease area by a factor of $e^{0.0147970}$.
 
+    ```{r, fig.show="hold", out.width="50%"}
+    plot(lm.fit.transformed)
+    ```
 
-(b)
-    ```{r}
+\newpage
+
+(b) We fit a logistic regression in which the binarized version of `area` is the response.
+    ```{r, results='asis'}
     # Binary area
     fire <- fire %>% 
       mutate(binary_area = if_else(area != 0, "Not zero", "Zero")) %>% 
@@ -83,29 +85,26 @@ kable(summary(fire %>% select(temp, RH, wind, rain, area, DMC)))
     
     glm.fit <- glm(binary_area ~ ., family = "binomial", data = fire %>% select(-area))
     
-    kable(glm.fit$coefficients)
+    kable(list(glm.fit$coefficients[1:14],glm.fit$coefficients[15:28]), 
+          col.names = "Coefficient", booktabs = TRUE, caption = "GLM Coefficients")
     ```
 
 
-    In general, the individual predictor variable effects the response (area) by leaving all else constant, a one unit increase in that predictor, effects the response (area) by its coefficient estimate. For example: wind, leaving all else constant, with a one unit increase in wind, will increase the log odds of area being non- zero by -0.08036.
+    In general, the individual predictor variable effects the response (area) by leaving all else constant, a one unit increase in that predictor, effects the response (area) by its coefficient estimate. For example: wind, leaving all else constant, with a one unit increase in wind, will decrease the log odds of area being non-zero by 0.08036.
 
-(c)
+(c) We use the linear model to predict responses for rows 15-25 and report the MSE:
     ```{r}
-    # Predict using LM for rows 15-25 and report MSE:
-    
-    pred <- predict(lm.fit, newdata = fire[15:25,])
+    # log transformed response model
     pred.transformed <- predict(lm.fit.transformed, newdata = fire[15:25,])
     
     actual <- fire[15:25,] %>% select(area)
-    
-    MSE <- mean(unlist((pred - actual)^2))
-    MSE
+
     MSE.transformed <- mean(unlist((pred.transformed - actual)^2))
     MSE.transformed
     ```
 
-
-(d) 
+\newpage
+(d) We select the best model from all the submodels of the linear model with four predictors, using randomly split data with 80% training and 20% validation.
 
     ```{r}
     fire2 <- fire %>% mutate(area = log1p(area))
@@ -148,7 +147,7 @@ kable(summary(fire %>% select(temp, RH, wind, rain, area, DMC)))
       "
       # Combinations is made from this code: 
       # https://stackoverflow.com/questions/40049313/generate-all-combinations-of-all-
-      #lengths-in-r-from-a-vector
+      # lengths-in-r-from-a-vector
       # It generates the combinations of predictors as a list of strings
       combinations <- do.call("c", lapply(seq_along(predictors), 
                                   function(i) combn(predictors, i, FUN = list)))
@@ -229,7 +228,8 @@ kable(summary(fire %>% select(temp, RH, wind, rain, area, DMC)))
     
       train <- fire2[training_ind, preds]
       val <- fire2[-training_ind, preds]
-      res <- model.combos(lm, "area", c("temp","RH","wind","rain"), train, val, TRUE, FALSE)
+      res <- model.combos(lm, "area", c("temp","RH","wind","rain"), 
+                          train, val, TRUE, FALSE)
       
       combo <- paste(res$Best.Combination, collapse=" ")
       if (is.null(best.combinations.all[[combo]])) {
@@ -246,6 +246,55 @@ kable(summary(fire %>% select(temp, RH, wind, rain, area, DMC)))
 # Chapter 3 Summary:
 ## Section 3.1:
 
+We study linear regression as a jumping off point for supervised learning.  Although linear regression is a very simple approach which has been around for a long time, it remains a useful tool in most arsenals for predicting quantitative responses.  Linear regression can answer questions such as, "Is there a relationship between predictors and response," "How strong is the relationship between predictors and response," "Which predictors are associated with the response," "How large is the association between each predictor and the response," "How accurately can we predict the response," "Is the relationship linear," and "Is there synergy/interaction between predictors?"
+
+  Simple linear regression is a "straightforward approach for predicting a quantitative response Y on the basis of a single predictor variable X."  It assumes there is approximately a linear relationship between X and Y, notated $Y \approx \beta_0 + \beta_1 X$.  Sometimes, we use the wording "regressing $Y$ onto $X$.  We use $\beta_0$ and $\beta_1$ as unknown constants that represent the intercept and slope terms of this linear model.  We call them model "coefficients" or "parameters."  We use training data to product estimates $\hat{\beta_0}$ and $\hat{\beta_1}$, we can predict future responses for a particular set of inputs $x$ by computing $\hat{y}=\hat{\beta_0}+\hat{\beta_1}x$, where the hat $\hat{}$ symbol denotes an estimated value of the coefficient or response.
+  
+### Estimating the Coefficients
+
+  In real situations, our model coefficients are unknown, so we must use data to estimate the coefficients.  We want a pair of $\hat{\beta_0}$ and $\hat{\beta_1}$ so the linear model fits the data well, such that $y_i \approx \hat{\beta_0}+\hat{\beta_1}x$ for each $i$.  How do we measure this "closeness"?  The most common approach is minimizing the "least squares" criterion.  To do this, let $\hat{y} \approx \hat{\beta_0}+\hat{\beta_1}x$ be the prediction for $Y$ based on the $i$th value of $X$.  Then $e_i=y_i-\hat{y_i}$ represents the $i$th residual, the difference between the $i$th observed response value and the $i$th response value that is predicted by our linear model.  Then, we define the "residual sum of squares" (RSS) as $RSS = e_1^2+e_2^2+...+e_n^2$.  Our Least Squares approach seeks to minimize RSS by choosing the best $\hat{\beta_0}$ and $\hat{\beta_1}$.  Calculus can show us that the minimizers are
+  
+$$
+\hat{\beta_1}= \frac{\sum_{i=1}^n (x_i-\bar{x}) (y_1-\bar{y})}{\sum_{i=1}^n (x_i-\bar{x})^2}
+$$
+$$
+\hat{\beta_0} = \bar{y} - \hat{\beta_1}\bar{x}.
+$$
+
+### Assessing the Accuracy of the Coefficient Estimates
+
+  Since, in a linear model, we assume that the true relationship between $X$ and $Y$ takes the form $Y=f(X)+\epsilon$ for an unknown function $f$, where $\epsilon$ is a mean-zero error term, we use the following relationship to approximate $f$:
+$$Y=\beta_0+\beta_1 X + \epsilon.$$
+This model "defines the population regression line, which is the best linear approximation to the true relationship between $X$ and $Y$.  We use $\beta_0$ as the intercept term, the expected value of $Y$ when $X=0$, and we use $\beta_1$ as the slope, the average increase in $Y$ associated with a single unit increase in $X$.  The <i>least squares line</i> is characterized by the estimates $\hat{\beta_0}$ and $\hat{\beta_1}$ defined above.
+
+  Linear regression includes an unbiased process of estimating the population mean, since on average, we expect $\hat{\mu}$ to equal $\mu$.  Although one particular set of observations $y_1, ..., y_n$ might lead $\hat{\mu}$ to over- or underestimate $\mu$, if we take the average of a large number of $\hat{\mu}$ estimates, the average would tend toward exactly $\mu$.  "Hence, an unbiased estimator does not systematically over- or underestimate the true parameter."  The least squares coefficient estimates $\hat{\beta_0}$ and $\hat{\beta_1}$ defined above benefit from being unbiased as well.
+  
+  Even though we have established that the average of many $\hat{\mu}$'s will tend toward exactly $\mu$ over many data sets, we still want to know how "far off" any single estimate of $\hat{\mu}$ will be.  We generally use the standard error to answer this question, written $SE(\hat{\mu})$.  The variance formula $Var(\hat{\mu}) = SE(\hat{\mu})^2 = \frac{\sigma^2}{n}$ where $\sigma$ is the standard deviation of each individual realization $y_i$ of $Y$.  This standard error tells us roughly how far each estimate of $\hat{\mu}$ will deffer from the actual value of $\mu$.  Notice that as $n$, increases, the standard error shrinks, so we expect our predictions to become increasingly accurate with larger sample sizes.  Similarly, we can compare how close $\hat{\beta_0}$ and $\hat{\beta_1}$ are to the "true" values $\beta_0$ and $\beta_1$.  The have their own formulas which depend on $\sigma^2=Var(\epsilon)$.
+$$SE(\hat{\beta_0}) = \sigma^2 \left[ \frac{1}{n} + \frac{\bar{x}^2}{\sum_{i=1}^n (x_i - \bar{x})^2} \right]$$
+$$SE(\hat{\beta_1}) = \frac{\sigma^2}{\sum_{i=1}^n (x_i-\bar{x})^2}$$
+We should notice that $SE(\hat{\beta_1})$ becomes smaller as $x_i$ become more spread out; "we have more leverage to estimate a slope when this is the case."  
+
+  Although we need to make a typically untrue assumption that each error term $\epsilon_i$ has a common variance $\sigma^2$ for each observation, the above formulas are typically good approximations even if the assumption isn't particularly valid.  In general though, $\sigma^2$ is not known, but can be estimated from the data.  We call this estimate the residual standard error RSE, given by the formula $RSE = \sqrt{RSS/(n-2)}$.
+  
+  The standard errors defined above can be used for computing ranges of values where the estimate has a given likelihood to lie, called confidence intervals.  For example, a 95% condience intervals is the range of values that will contain the true unknown value of a parameter with 95% probability.  The following property also holds for a 95% confidence interval: "if we take repeated samples and construct the confidence interval for each sample, 95% of the intervals will contain the true unknown value of the parameter."
+  
+  We can also use standard errors to perform a hypothesis test on the coefficients.  Hypothesis tests usually include testing a "null hypothesis" $H_0$ versus "alternative hypothesis" $H_a$.  Typically, we have $H_0$: "There is no relationship between X and Y, so $\beta_1=0$" and $H_a$: "There is some relationship between X and Y, so $\beta_1 \neq 0$."  We typically use a p-value derived from a t-statistic which measures the number of standard deviations that $\hat{\beta_1}$ is away from 0 (or the value used in the hypotheses):
+$$t = \frac{\hat{\beta_0}-0}{SE(\hat{\beta_1})}$$
+The p-value is the probability of observing any number equal to $|t|$ or larger, assuming $\beta_1=0$.  When we see a notably small p-value (decided ahead of time, often less than 5% or 1%), we infer there is an association between the predictor and the response and subsequently reject the null hypothesis; we can declare a relationship exists between $X$ and $Y$.
+
+### Assessing the Accuracy of the Model
+
+  If we have rejected the null hypothesis in favor of the alternative, we often want to quantify "the extent to which the model fits the data."  We measure the quality of a linear regression fit using two related quantities: the residual square error (RSE) and the $R^2$ statistic.  First, RSE is an estimate of the standard deviation of $\epsilon$.  It is essentially the average amount of deviation between the actual response and the hypothetically "true" regression line.  We consider RSE to be a measure of the "lack of fit" of the model to the data.  Since RSE is measured in terms of units of Y, it may not be readily clear what a "good" RSE is.
+  
+  By contrast, the $R^2$ statistic takes the form of a proportion, so it is always between 0 and 1.  This scale tells us the proportion of variance explained by the model.  $R^2$ is calculated using, 
+
+$$
+R^2 = \frac{TSS-RSS}{TSS} = 1 - \frac{RSS}{TSS},
+$$ 
+where $TSS = \sum(y_i-\bar{y})^2$ is the total sum of squares, and RSS is the residual sum of squares defined previously.  Since TSS measures the total variance in the response Y, it can be though of as the "amount of variability inherent in the response before the regression is performed."  By contrast, RSS measure the variable which remains unexplained after the regression is performed.  So, $TSS-RSS$ measures the "amount variability in the response that is explained (or removed) by performing the regression, and $R^2$ measures the proportion of variability in Y that can be explained using X."
+  
+  Unlike RSE which has to be interpreted contextually based on units of Y, $R^2$ has consistent interpretation from model to model. An $R^2$ statistic close to 1 indicates "a large proportion of the variability in the response is explained by the regression.  A number near 0 indicates the regression does not explain much of the variability in the response; this might occur because the linear model is wrong, or the error variance $\sigma^2$ is high," or even both.  Even with this interpretation advantage, it can still be difficult to decide what is a "good" $R^2$ value without knowing about its application.
+
 ## Section 3.2:
 
 Simple linear regression is useful if there is only one predictor:
@@ -256,7 +305,8 @@ If we had more than one predictors, we may need to use multiple linear regressio
 $$
 Y = \beta_{0} + \beta_{1} X_{1} + \beta_{2} X_{2} + \dots + \beta_{p} X_{p}
 $$
-### {3.2.1 Estimating the Regression Coefficients}
+
+### 3.2.1 Estimating the Regression Coefficients
 How do we estimate the coefficients of multiple linear regression? Similar to simple linear regression, we has below formula to make prediction:
 $$
 \hat{y} = \hat{\beta_{0}} + \hat{\beta_{1}} x_{1} + \hat{\beta_{2}} x_{2} + \dots + \hat{\beta_{p}} x_{p}
@@ -267,41 +317,39 @@ RSS
 =\sum_{i=1}^{n} (y_{i} - \hat{y_{i}})^2 
 \\=\sum_{i=1}^{n} (y_{i} - \hat{\beta_{0}} - \hat{\beta_{1}} x_{i1} - \hat{\beta_{2}} x_{i2} - \dots - \hat{\beta_{p}} x_{ip})^2
 $$
-### {3.2.2 Some Important Questions}
+
+### 3.2.2 Some Important Questions
 Answering below questions will help us to better understand multiple linear regression:
-\
+
 1. Is at least one of the predictors useful in predicting the response?
-This raise a new question: Is There a Relationship Between the Response and Predictors?
-We perform a hypothesis test to find out the relationship between the response and predictors:
-$$
-H_{0}: \beta_{1} = \beta_{2} = \dots  = \beta_{p} = 0 \\
-H_{1}: \text{at least one } \beta_{i} \text{ is nonzero}
-$$
-This test is performed by computing the F-statistic, which allow us to determine the p-value. If there is no relationship between the response and predictors, we may expect the F-statistic to be close to 1.If there is a relationship, we may expect the F-statistic to be greater than 1. 
-$$
-    F =
-\\ \frac{(TSS-RSS)/p}{RSS/(n-p-1)}
-$$
+    This raises a new question: Is There a Relationship Between the Response and Predictors?
+    We perform a hypothesis test to find out the relationship between the response and predictors:
+    \begin{align*}
+    H_{0}: &\beta_{1} = \beta_{2} = \dots  = \beta_{p} = 0 \\
+    H_{1}: &\text{at least one } \beta_{i} \text{ is nonzero}
+    \end{align*}
+    This test is performed by computing the F-statistic, which allow us to determine the p-value. If there is no relationship between the response and predictors, we may expect the F-statistic to be close to 1.If there is a relationship, we may expect the F-statistic to be greater than 1. 
+    $$
+    F = \frac{(TSS-RSS)/p}{RSS/(n-p-1)}
+    $$
 p-value would be more general than F-statistic for determine the relation between the response and predictors. To reject the null hypothesis, the p-values need to be less than 0.05 typically. 
 
-\
 2. Do all of the predictors help explain Y, or only a few of them?
-This raise a new question: how to decide on Important Variables?
-After computing the F-statistic and to examine the associated p-value, we use variable selection to determine the significance of predictors. There are three approaches for variable selection, which are forward selection, backward selection, and mixed selection. Forward selection begins with a model that contains no variable, then we start adding the most significant variables one after the other, at last, we will stop selection if it reach a point or until all the variables are selected. Backward selection begins with a model that contains all variables, then we start removing the least significant variables one after the other, at last, we will stop selection if it reach a point or until no variable is left. Mixed selection is a combination of forward and backward selection. 
+    This raises a new question: how to decide on Important Variables?
+    After computing the F-statistic and to examine the associated p-value, we use variable selection to determine the significance of predictors. There are three approaches for variable selection, which are forward selection, backward selection, and mixed selection. Forward selection begins with a model that contains no variable, then we start adding the most significant variables one after the other, at last, we will stop selection if it reach a point or until all the variables are selected. Backward selection begins with a model that contains all variables, then we start removing the least significant variables one after the other, at last, we will stop selection if it reach a point or until no variable is left. Mixed selection is a combination of forward and backward selection. 
 
-\
+
 3. How well does the model fit the data?
 This raise a new question: Is the Model Fit?
 Similar to the simple regression setting, we calculate RSE and $R^2$ to determine how well the model fits the data.
 $$
-    RSE =
-\\ \sqrt{\frac{RSS}{(n-p-1)}}
+    RSE = \sqrt{\frac{RSS}{(n-p-1)}}
 $$
 
-\
+
 4. How accurate is our prediction?
-This raise a new question: How to assess prediction accuracy?
-We use confidence intervals to determine the error between $\hat{Y}$ and $f(X)$. And we use prediction intervals to the utmost extent reduce both reducible and irreducible error.
+    This raises a new question: How to assess prediction accuracy?
+    We use confidence intervals to determine the error between $\hat{Y}$ and $f(X)$. And we use prediction intervals to the utmost extent reduce both reducible and irreducible error.
 
 ## Section 3.3:
 
@@ -391,15 +439,33 @@ There are a few common problems that occur when fitting a linear regression mode
 
 ## Section 3.4:
 
-<ol>
-  <li><b>Exploring the relationship between sales and advertising budget:</b> Since there are three variables that make up advertising budget (TV, radio, and newspaper), a multiple linear regression model is used with TV, radio and newspaper as the predictors and sales as the response. An F-statistic can be used to test if $H_0: \beta_{TV} = \beta_{radio} = \beta_{newspaper} = 0$. For this dataset, the pvalue was low providing significant evidence of the relationship between sales and advertising budget.</li>
-  <li><b>Strength of the relationship:</b>RSE which estimates the standard deviation of the response (in this case the sales) between the population regression line; and, $R^2$ which is the percentage of variability of the response explained by the predictors are two good measures for the strength of a relationship between response and predictors. </li>
-  <li><b>Which media are association with sales?:</b> Individual pvalues of the predictors can be viewed to identify the significance of any individual predictor to the response.</li>
-  <li><b>How large is the association between each medium and sales?:</b> Constructing confidence intervals for the individual $\hat{\beta}$ coefficients is a good way to go about measure the size of association between the predictors and the response. If the confidence interval includes 0, then it may suggest a predictor has non- significant impact on the response. However, collinearity could be an issue which results in large confidence bounds. VIF scores can be viewed to ensure collinearity is not an issue. Another technique to identify individual relationships between the predictors and response is to perform simple linear regression models between each predictor and response and identify size of association. </li>
-  <li><b>How accurately can we predict future sales?:</b> If we are interested in an individual response then we can use a prediction interval, but if interested in an average response we can use a confidence interval. The bounds for prediction intervals are always wider then confidence intervals due to taking into account irreducible error.</li>
-  <li><b>Is the relationship linear?:</b> A residual diagnostic plot can be used to identify linearity. We expect no pattern (centered at 0) among the residuals if the relationship is linear. Transformations can be used if patterns are found.</li>
-  <li><b>Is there synergy among the advertising media?:</b>Interactions among variables should be explored.</li>
-</ol>
+\textbf{Exploring the relationship between sales and advertising budget}
+
+Since there are three variables that make up advertising budget (TV, radio, and newspaper), a multiple linear regression model is used with TV, radio and newspaper as the predictors and sales as the response. An F-statistic can be used to test if $H_0: \beta_{TV} = \beta_{radio} = \beta_{newspaper} = 0$. For this dataset, the pvalue was low providing significant evidence of the relationship between sales and advertising budget.
+
+\textbf{Strength of the relationship}
+
+RSE which estimates the standard deviation of the response (in this case the sales) between the population regression line; and, $R^2$ which is the percentage of variability of the response explained by the predictors are two good measures for the strength of a relationship between response and predictors.
+
+\textbf{Which media are association with sales?}
+  
+Individual pvalues of the predictors can be viewed to identify the significance of any individual predictor to the response.
+
+\textbf{How large is the association between each medium and sales?}
+
+Constructing confidence intervals for the individual $\hat{\beta}$ coefficients is a good way to go about measure the size of association between the predictors and the response. If the confidence interval includes 0, then it may suggest a predictor has non- significant impact on the response. However, collinearity could be an issue which results in large confidence bounds. VIF scores can be viewed to ensure collinearity is not an issue. Another technique to identify individual relationships between the predictors and response is to perform simple linear regression models between each predictor and response and identify size of association.
+  
+\textbf{How accurately can we predict future sales?}
+  
+If we are interested in an individual response then we can use a prediction interval, but if interested in an average response we can use a confidence interval. The bounds for prediction intervals are always wider then confidence intervals due to taking into account irreducible error.</li>
+
+\textbf{Is the relationship linear?}
+
+A residual diagnostic plot can be used to identify linearity. We expect no pattern (centered at 0) among the residuals if the relationship is linear. Transformations can be used if patterns are found.
+
+\textbf{Is there synergy among the advertising media?}
+
+Interactions among variables should be explored.
 
 ## Section 3.5:
 
@@ -416,8 +482,6 @@ The best value of K is based on the bias- variance trade off. Smaller K will hav
 In the choice between parametric or non- parametric methods, if the true form of the relationship matches the parametric models assumptions, then it will outperform the non- parametric method. 
 
 "In general, parametric methods will tend to outperform non- parametric approaches when there is a small number of observations per predictor".
-
-<<<<<<< HEAD
 
 
 ## 4 ISLR Problems

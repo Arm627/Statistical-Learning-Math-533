@@ -530,6 +530,8 @@ In the choice between parametric or non- parametric methods, if the true form of
     pairs(Auto)
     ```
 
+\newpage
+
 (b) Compute the matrix of correlations between the variables using the function cor(). You will need to exclude the name variable, which is qualitative.
     ```{r}
     cor(subset(Auto, select = -name))
@@ -553,6 +555,8 @@ In the choice between parametric or non- parametric methods, if the true form of
     plot(mlr)
     ```
 
+\newpage
+
 (e) Use the * and : symbols to fit linear regression models with interaction effects. 
 
     Cylinders * weight is statistically significant, whereas displacement * acceleration is not. 
@@ -561,6 +565,7 @@ In the choice between parametric or non- parametric methods, if the true form of
     summary(mlr.new)
     ```
 
+
 (f) Try a few different transformations of the variables.
 
     The log(cylinders) transformation is more significant than cylinders, but the sqrt(acceleration) is less significant than acceleration. We assume that is depend on the variables selection. 
@@ -568,3 +573,52 @@ In the choice between parametric or non- parametric methods, if the true form of
     summary(lm(mpg ~ . - name + log(cylinders), data=Auto))
     summary(lm(mpg ~ . - name + sqrt(acceleration), data=Auto))
     ```
+
+
+3.10
+
+(a) Here, we fit a multiple regression model to predict Sales using Price, Urban, and US.
+
+    ```{r}
+    library(ISLR2)
+    lm.fit <- lm(Sales ~ Price + Urban + US, data = Carseats)
+    summary(lm.fit)
+    ```
+(b) Our model's coefficients can be interpreted as follows.  As the price the company charges for car seats at each site increases by $1, our model predicts unit sales at each location decrease by 54 units.  If the store is in an urban location, our model predicts unit sales at each location decrease by 22 units.  If the store is in the United States, our model predicts unit sales at each location increase by 1,201.
+
+(c) The model's equation form is given by
+    $$
+    Sales = 13.043469 -0.054459x_1 -0.021916x_2 +1.200573x_3.
+    $$
+    Sales is unit sales in thousands of units; $x_1$ is the price of the carseat; $x_2$ is an indicator variable, where $x_2=0$ if the store is in a rural area, and $x_2=1$ if the store is in an urban area; and $x_3$ is another indicator variable, where $x_3=0$ if the store is outside the United States, and $x_3=0$ if the store is within the United States.
+
+(d) We can reject the null hypothesis $H_0: \beta_j=0$ for the Price and USYes predictors; their p-values are near 0.  We fail to reject the null hypothesis for UrbanYes; with a p-value of 0.936, we have no significant evidence that the difference in sales based on the urban status of the store was not due to random chance.
+
+(e) We now fit a leaner model based only on Price and USYes predictors.
+    ```{r}
+    lm.fit2 <- lm(Sales ~ Price + US, data = Carseats)
+    summary(lm.fit2)
+    ```
+(f) With a virtually identical $R^2$ statistic of 0.2393 the models in part (a) and (e) both fit the data modestly well.  We can interpret this statistic to mean that the models explain roughly 24% of the variability in the carseat sales can be explained by the carseat's price and whether the store was located inside or outside the US.
+
+(g) We now obtain 95% confidence intervals for the coefficients of the model in part (e):
+    ```{r}
+    confint(lm.fit2)
+    ```
+
+(h) To search for evidence of outlier observations in the model of part (e), we can plot the residuals of the model.
+    ```{r}
+    plot(residuals.lm(lm.fit2))
+    ```
+
+    We do not visually see evidence of outliers in our residual plot.  Next, we can search for evidence of high leverage observations by plotting leverage statistics for each observation.
+    ```{r}
+    plot(hatvalues(lm.fit2))
+    ```
+
+    Although we did not observe outliers, we do now see evidence of a few unusually leverage observations.  We can identify the particular observation with the largest leverage statistic.
+    ```{r}
+    which.max(hatvalues(lm.fit2))
+    ```
+    
+    Now we know that the observation with index 43 has the largest leverage statistic.

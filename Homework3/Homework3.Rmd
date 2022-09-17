@@ -10,17 +10,36 @@ knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 set.seed(123)
 ```
 
+## 1 Iterative Technique for Finding Roots of `glm` Coefficients 
 
+We can use an iterative technique, such as the Fisher Scoring method to find the Maximum Likelihood Estimates for the coefficients of the logistic regression model. 
+
+Assuming $y_i\sim Bin(n_i,\pi_i)$ and $\log\left(\frac{\pi_i}{1-\pi_i}\right) = x_i^T\boldsymbol{\beta}$, i.e. applying the logistic regression model to predict $y$, we find the likelihood with respect to $\boldsymbol\beta$ to be proportional to
+$$
+\prod_{i=1}^N\left(e^{x_i^T\boldsymbol\beta y_i}\right)\left(1+e^{x_i^T\boldsymbol\beta}\right)^{-n_i}.
+$$
+Then, to maximize this with respect to the vector $\boldsymbol\beta$, we can use the iterative Fisher Scoring method as follows:
+
+1. Set initial values $\boldsymbol\beta_0$ for $\boldsymbol\beta$
+2. Compute the Observed Fisher Information $\mathbf{I}$ (i.e. the negative of the Hessian $\nabla^2\ell$) and gradient $\nabla\ell$ of the log-likelihood $\ell(\boldsymbol\beta)$ with respect to $\boldsymbol\beta$ using the initial values $\boldsymbol\beta_0$
+3. Compute 
+    $$
+    \boldsymbol\beta_1 = \boldsymbol\beta_0 + \mathbf{I}^{-1}(\boldsymbol\beta_0)\nabla\ell(\boldsymbol\beta_0)
+    $$
+4. Perform a local line search to find $\boldsymbol\beta_{1_{L}}$ such that $\ell(\boldsymbol\beta_{1_{L}})>\ell(\boldsymbol\beta_1)$, set $\boldsymbol\beta_1$ equal to $\boldsymbol\beta_{1_{L}}$
+4. Repeat until convergence, i.e. compute
+    $$
+    \boldsymbol\beta_{m+1} = \boldsymbol\beta_m + \mathbf{I}^{-1}(\boldsymbol\beta_m)\nabla\ell(\boldsymbol\beta_m)
+    $$
+
+
+## 2 Forest Fires
 ```{r}
 library(tidyverse)
 library(ggplot2)
 library(knitr)
 fire <- read.csv("data/forestfires.csv")
-```
-
-## 2 Forest Fires
-```{r}
-head(fire)
+kable(head(fire))
 ```
 
 
@@ -86,7 +105,7 @@ kable(summary(fire %>% select(temp, RH, wind, rain, area, DMC)))
     ```
 
 
-(d)
+(d) 
 
     ```{r}
     fire2 <- fire %>% mutate(area = log1p(area))

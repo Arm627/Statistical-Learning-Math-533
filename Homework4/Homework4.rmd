@@ -1,0 +1,24 @@
+---
+title: "Homework 4"
+author: "Brandon Amaral, Monte Davityan, Nicholas Lombardo, Hongkai Lu"
+date: '2022-10-03'
+output: pdf_document
+---
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+options(knitr.kable.NA = '')
+set.seed(123)
+```
+
+## 1 Murphy Chapter 13 & ISLR Chapter 10 Summaries
+
+
+
+## 2 Reproduction of ISLR Lab 10.9
+
+## 3 ISLR Problems
+
+# 10.7
+
+# 10.8

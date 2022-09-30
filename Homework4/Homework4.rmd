@@ -18,7 +18,6 @@ set.seed(123)
 ## 2 Reproduction of ISLR Lab 10.9
 ### 10.9.1 A Single Layer Network on the Hitters Data
 First, We load the Hitters data and split it to training and test set.
-
 ```{r}
 library(ISLR2)
 Gitters <- na.omit(Hitters)
@@ -27,14 +26,12 @@ set.seed(13)
 ntest <- trunc(n/3)
 testid <- sample(1:n, ntest)
 ```
-
 Then, we fit a linear model and obtain the mean absolute prediction error, which is 254.6687.
 ```{r}
 lfit <- lm(Salary ~., data=Gitters[-testid,])
 lpred <- predict(lfit, Gitters[testid,])
 with(Gitters[testid,], mean(abs(lpred - Salary)))
 ```
-
 Next, we fit a lasso model. Similarly, we calculate the absolute prediction error of the lasso model, which is slightly less than the result of linear model.
 ```{r}
 x <- scale(model.matrix(Salary ~. -1, data=Gitters))
@@ -45,9 +42,35 @@ cvfit <- cv.glmnet(x[-testid, ], y[-testid], type.measure='mae')
 cpred <- predict(cvfit, x[testid,], s='lambda.min')
 mean(abs(y[testid] - cpred))
 ```
-Last
+Last, we fit the neural network with library keras. We set up a model structure, which describes the neural network. 
+```{r}
+library(keras)
+modnn <- keras_model_sequential() %>% 
+  layer_dense(units=50, activation='relu', input_shape = ncol(x)) %>% 
+  layer_dropout(rate=0.4) %>%
+  layer_dense(units=1)
+```
+
+```{r}
+modnn %>% compile(loss='mse', optimizer=optimizer_rmsprop(), metrics=list('mean_absolute_error'))
+
+history <- modnn %>% fit(
+  x[-testid, ], y[-testid], epochs=200, batch_size=32, 
+  validation_data=list(x[testid,], y[testid])
+)
+plot(history)
+```
 
 
+```{r}
+npred <- predict(modnn, x[testid,])
+mean(abs(y[testid] - npred))
+```
+### 10.9.2 A Multilayer Network on the MNIST Digit Data
+### 10.9.3 Convolutional Neural Networks
+### 10.9.4 Using Pretrained CNN Models
+### 10.9.5 IMDb Document Classification
+### 10.9.6 Recurrent Neural Networks
 
 
 ## 3 ISLR Problems

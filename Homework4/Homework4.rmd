@@ -13,7 +13,22 @@ set.seed(123)
 
 ## 1 Murphy Chapter 13 & ISLR Chapter 10 Summaries
 
+### Section 10.6 When to Use Deep Learning
+The text shows three way to determine when to use deep learning:
+1: Occam’s razor principle: when faced with several methods that give roughly equivalent performance, pick the simplest.
+2: According to the text, "if we can produce models with the simpler tools that perform as well, they are likely to be easier to fit and understand, and potentially less fragile than the more complex approaches."
+3: When the sample size of the data is extremely large and the interpretability of the model is not our main priority, we should use Deep Learning to be our first choice.  
+### Section 10.7 Fitting a Neural Network
+#### 10.7.1 Backpropagation
 
+#### 10.7.2 Regularization and Stochastic Gradient Descent
+
+#### 10.7.3 Dropout Learning
+
+#### 10.7.4 Network Tuning
+
+### Section 10.8 Interpolation and Double Descent
+Double descent is a phenomenon that the test error has a U-shape before the interpolation threshold is reached, then it descends again as an increasingly flexible model is fit.That may applied to deep learning as well. However, even though double descent can occasionally occur in neural networks model, we do not rely on this behavior typically; meanwhile, it is important to know that the bias-variance trade-oﬀ always holds.
 
 ## 2 Reproduction of ISLR Lab 10.9
 ### 10.9.1 A Single Layer Network on the Hitters Data

@@ -19,13 +19,22 @@ The text shows three way to determine when to use deep learning:
 2: According to the text, "if we can produce models with the simpler tools that perform as well, they are likely to be easier to fit and understand, and potentially less fragile than the more complex approaches."
 3: When the sample size of the data is extremely large and the interpretability of the model is not our main priority, we should use Deep Learning to be our first choice.  
 ### Section 10.7 Fitting a Neural Network
+When fitting a neural netwrok model, the text provide two general strategies:
+1. Slow Learning
+2. Regularization
+
 #### 10.7.1 Backpropagation
+Backpropagation is a process that the act of diﬀerentiation assigns a fraction of the residual to each of the parameters via the chain rule.
 
 #### 10.7.2 Regularization and Stochastic Gradient Descent
+Stochastic Gradient Descent is a process that we sample a small fraction of n observations' summation of the derivatives of $R_i(\theta)$ with respect to $\beta_k$ and $w_kj$ each time we compute a gradient step if n is large. 
+In this process, Regularization is essential to avoide overfitting. 
 
 #### 10.7.3 Dropout Learning
+Dropout learning is a way to randomly remove a fraction φ of the units in a layer when fitting the model.
 
 #### 10.7.4 Network Tuning
+There are three ways provided for network tunning in the text, which are "The number of hidden layers, and the number of units per layer", "The number of hidden layers, and the number of units per layer", and "The number of hidden layers, and the number of units per layer".
 
 ### Section 10.8 Interpolation and Double Descent
 Double descent is a phenomenon that the test error has a U-shape before the interpolation threshold is reached, then it descends again as an increasingly flexible model is fit.That may applied to deep learning as well. However, even though double descent can occasionally occur in neural networks model, we do not rely on this behavior typically; meanwhile, it is important to know that the bias-variance trade-oﬀ always holds.

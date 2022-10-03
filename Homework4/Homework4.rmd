@@ -20,5 +20,46 @@ set.seed(123)
 ## 3 ISLR Problems
 
 ### 10.7
+We fit a neural network with a single hidden layer and 10 units to the `Default` data, and compare its performance to a logistic regression model.
+```{r, cache=FALSE}
+library(ISLR2)
+library(keras)
+library(tidyverse)
+
+
+x <- model.matrix(default ~ . -1, data = Default) |>
+  scale()
+
+y <- ifelse(Default$default == "Yes",1,0)
+
+n <- nrow(x)
+test_ind <- sample(1:n, n/5)
+
+x_train <- x[-test_ind,]
+x_test <- x[test_ind,]
+y_train <- y[-test_ind]
+y_test <- y[test_ind]
+
+nnmodel <- keras_model_sequential() |>
+  layer_dense(units = 10, activation = "relu", input_shape = ncol(x)) |>
+  layer_dropout(rate = 0.20) |>
+  layer_dense(units = 1, activation = "sigmoid")
+
+nnmodel |> compile(
+  loss = "binary_crossentropy", 
+  optimizer = optimizer_rmsprop(), 
+  metrics = "accuracy")
+
+history <- nnmodel |>
+  fit(x_train, y_train, epochs = 40, batch_size = 30, validation_split = 0.2)
+
+plot(history, smooth = FALSE)
+
+y_test_pred <- nnmodel |> predict(x_test)
+mr <- 1/length(y_test)*sum(y_test != round(y_test_pred))
+
+```
+
+
 
 ### 10.8

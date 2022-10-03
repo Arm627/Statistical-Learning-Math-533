@@ -9,6 +9,11 @@ output: pdf_document
 knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
 options(knitr.kable.NA = '')
 set.seed(123)
+
+library(ISLR2)
+library(keras)
+library(tidyverse)
+library(glmnet)
 ```
 
 ## 1 Murphy Chapter 13 & ISLR Chapter 10 Summaries
@@ -18,7 +23,9 @@ The text shows three way to determine when to use deep learning:
 1: Occam’s razor principle: when faced with several methods that give roughly equivalent performance, pick the simplest.
 2: According to the text, "if we can produce models with the simpler tools that perform as well, they are likely to be easier to fit and understand, and potentially less fragile than the more complex approaches."
 3: When the sample size of the data is extremely large and the interpretability of the model is not our main priority, we should use Deep Learning to be our first choice.  
+
 ### Section 10.7 Fitting a Neural Network
+
 #### 10.7.1 Backpropagation
 
 #### 10.7.2 Regularization and Stochastic Gradient Descent
@@ -34,7 +41,6 @@ Double descent is a phenomenon that the test error has a U-shape before the inte
 ### 10.9.1 A Single Layer Network on the Hitters Data
 First, We load the Hitters data and split it to training and test set.
 ```{r}
-library(ISLR2)
 Gitters <- na.omit(Hitters)
 n <- nrow(Gitters)
 set.seed(13)
@@ -49,10 +55,10 @@ with(Gitters[testid,], mean(abs(lpred - Salary)))
 ```
 Next, we fit a lasso model. Similarly, we calculate the absolute prediction error of the lasso model, which is slightly less than the result of linear model.
 ```{r}
+library(glmnet)
 x <- scale(model.matrix(Salary ~. -1, data=Gitters))
 y <- Gitters$Salary
 
-library(glmnet)
 cvfit <- cv.glmnet(x[-testid, ], y[-testid], type.measure='mae')
 cpred <- predict(cvfit, x[testid,], s='lambda.min')
 mean(abs(y[testid] - cpred))
@@ -60,20 +66,19 @@ mean(abs(y[testid] - cpred))
 
 Last, we fit the neural network with library keras. As the text written, it is a challenge to get keras running on computer. The error I got is "CondaSSLError: Encountered an SSL error. Most likely a certificate verification issue." Still figure out a way to get this installing. 
 ```{r}
-library(keras)
 modnn <- keras_model_sequential() %>% 
   layer_dense(units=50, activation='relu', input_shape = ncol(x)) %>% 
   layer_dropout(rate=0.4) %>%
   layer_dense(units=1)
 ```
 
-```{r}
+```{r, cache=TRUE}
 modnn %>% compile(loss='mse', optimizer=optimizer_rmsprop(), metrics=list('mean_absolute_error'))
 history <- modnn %>% fit(
   x[-testid, ], y[-testid], epochs=200, batch_size=32, 
   validation_data=list(x[testid,], y[testid])
 )
-plot(history)
+plot(history, smooth = FALSE)
 ```
 
 
@@ -112,14 +117,14 @@ modelnn %>%
   layer_dropout(rate=0.3) %>%
   layer_dense(units=10, activation='softmax')
 
-summary(modelnn)
+#summary(modelnn)
 ```
 
 ```{r}
 modelnn %>% compile(loss='categorical_crossentropy', optimizer=optimizer_rmsprop(), metrics=c("accuracy"))
 ```
 
-```{r}
+```{r, cache=TRUE}
 system.time(
   history <- modelnn %>% 
     fit(x_train, y_train, epochs=30, batch_size=128, validation_split=0.2)
@@ -136,10 +141,10 @@ modelnn %>% predict(x_test) %>% k_argmax() %>% accuracy(g_test)
 modellr <- keras_model_sequential() %>%
    layer_dense(input_shape = 784, units = 10,
        activation = "softmax")
-summary(modellr)
+#summary(modellr)
 ```
 
-```{r}
+```{r, cache=TRUE}
 modellr %>% compile(loss = "categorical_crossentropy",
      optimizer = optimizer_rmsprop(), metrics = c("accuracy"))
 modellr %>% fit(x_train, y_train, epochs = 30,
@@ -148,7 +153,7 @@ modellr %>% predict(x_test) %>% k_argmax() %>% accuracy(g_test)
 ```
 
 ### 10.9.3 Convolutional Neural Networks
-```{r}
+```{r, cache=TRUE}
 cifar100 <- dataset_cifar100()
 names(cifar100)
 x_train <- cifar100$train$x
@@ -192,10 +197,10 @@ model <- keras_model_sequential() %>%
    layer_dropout(rate = 0.5) %>%
    layer_dense(units = 512, activation = "relu") %>%
    layer_dense(units = 100, activation = "softmax")
-summary(model)
+#summary(model)
 ```
 
-```{r}
+```{r, cache=TRUE}
 model %>% compile(loss = "categorical_crossentropy",
     optimizer = optimizer_rmsprop(), metrics = c("accuracy"))
 #history <- model %>% fit(x_train, y_train, epochs = 30,
@@ -218,9 +223,9 @@ for (i in 1:num_images) {
 x <- imagenet_preprocess_input(x)
 ```
 
-```{r}
+```{r, cache=TRUE}
 model <- application_resnet50(weights = "imagenet")
-summary(model)
+#summary(model)
 ```
 
 ```{r}
@@ -291,7 +296,7 @@ par(mar = c(4, 4, 4, 4), mfrow = c(1, 1))
 plot(-log(fitlm$lambda), acclmv)
 ```
 
-```{r}
+```{r, cache=TRUE}
 model <- keras_model_sequential() %>%
    layer_dense(units = 16, activation = "relu",
       input_shape = c(10000)) %>%
@@ -304,7 +309,7 @@ history <- model %>% fit(x_train_1h[-ival, ], y_train[-ival],
    validation_data = list(x_train_1h[ival, ], y_train[ival]))
 ```
 
-```{r}
+```{r, cache=TRUE}
 history <- model %>% fit(
     x_train_1h[-ival, ], y_train[-ival], epochs = 20,
     batch_size = 512, validation_data = list(x_test_1h, y_test)
@@ -312,7 +317,9 @@ history <- model %>% fit(
 ```
 
 ### 10.9.6 Recurrent Neural Networks
+
 #### Sequential Models for Document Classification
+
 ```{r}
 wc <- sapply(x_train, length)
 median(wc)
@@ -335,17 +342,18 @@ model <- keras_model_sequential() %>%
    layer_dense(units = 1, activation = "sigmoid")
 ```
 
-```{r}
+```{r, cache=TRUE}
 model %>% compile(optimizer = "rmsprop",
     loss = "binary_crossentropy", metrics = c("acc"))
 #history <- model %>% fit(x_train, y_train, epochs = 10,
 history <- model %>% fit(x_train, y_train, epochs = 3,
     batch_size = 128, validation_data = list(x_test, y_test))
-plot(history)
+plot(history, smooth = FALSE)
 ```
+
 #### Time Series Prediction
+
 ```{r}
-library(ISLR2)
 xdata <- data.matrix(
  NYSE[, c("DJ_return", "log_volume","log_volatility")]
  )
@@ -408,7 +416,7 @@ model %>% compile(optimizer = optimizer_rmsprop(),
     loss = "mse")
 ```
 
-```{r}
+```{r, cache=TRUE}
 history <- model %>% fit(
     xrnn[istrain,, ], arframe[istrain, "log_volume"],
 #    batch_size = 64, epochs = 200,
@@ -431,7 +439,7 @@ x <- model.matrix(log_volume ~ . - 1, data = arframed)
 colnames(x)
 ```
 
-```{r}
+```{r, cache=TRUE}
 arnnd <- keras_model_sequential() %>%
    layer_dense(units = 32, activation = 'relu',
       input_shape = ncol(x)) %>%
@@ -445,7 +453,7 @@ history <- arnnd %>% fit(
     batch_size = 32, validation_data =
       list(x[!istrain, ], arframe[!istrain, "log_volume"])
   )
-plot(history)
+plot(history, smooth = FALSE)
 
 npred <- predict(arnnd, x[!istrain, ])
 1 - mean((arframe[!istrain, "log_volume"] - npred)^2) / V0
@@ -455,18 +463,15 @@ npred <- predict(arnnd, x[!istrain, ])
 ## 3 ISLR Problems
 
 ### 10.7
-We fit a neural network with a single hidden layer and 10 units to the `Default` data, and compare its performance to a logistic regression model.
-```{r, cache=FALSE}
-library(ISLR2)
-library(keras)
-library(tidyverse)
-
-
-x <- model.matrix(default ~ . -1, data = Default) |>
-  scale()
-
+We fit a neural network with a single hidden layer and 10 units to the `Default` data, and compare its performance to a logistic regression model. First, we scale our data in a model matrix, excluding the usual first column of 1's for an intercept term, and create a separate response vector of 1's and 0's. 
+```{r}
+x <- model.matrix(default ~ . -1, data = Default) |> scale()
 y <- ifelse(Default$default == "Yes",1,0)
+```
 
+Next, we partition our data into training and test datasets, training on a random set of 80% of the data, and testing on the remaining 20%. 
+
+```{r}
 n <- nrow(x)
 test_ind <- sample(1:n, n/5)
 
@@ -474,7 +479,10 @@ x_train <- x[-test_ind,]
 x_test <- x[test_ind,]
 y_train <- y[-test_ind]
 y_test <- y[test_ind]
+```
 
+Now, we build the model architecture, defining a single layer model with 10 units in the hidden layer, with the usual ReLU activation function and a dropout rate of 20% for regularization. Since we are predicting a binary response, we use the sigmoid activation function in the output layer. Then, we compile the model, using the binary cross entropy loss function as a measure of fit. 
+```{r}
 nnmodel <- keras_model_sequential() |>
   layer_dense(units = 10, activation = "relu", input_shape = ncol(x)) |>
   layer_dropout(rate = 0.20) |>
@@ -484,16 +492,35 @@ nnmodel |> compile(
   loss = "binary_crossentropy", 
   optimizer = optimizer_rmsprop(), 
   metrics = "accuracy")
+```
 
+
+We fit the model using a batch size of 30 with 40 epochs. We also further split the data into a third validation set, again with 20%, so we fit the model on 6400 training observations. Then, each epoch is $6400/30\approx 214$ stochastic gradient descent steps. We plot the loss of the model alongside its
+```{r, cache=TRUE}
 history <- nnmodel |>
   fit(x_train, y_train, epochs = 40, batch_size = 30, validation_split = 0.2)
 
 plot(history, smooth = FALSE)
-
-y_test_pred <- nnmodel |> predict(x_test)
-mr <- 1/length(y_test)*sum(y_test != round(y_test_pred))
-
 ```
+
+Now, we make our predictions on the test set and find the model's misclassification rate.
+```{r}
+y_test_pred <- nnmodel |> predict(x_test)
+NN_misclass_rate <- 1/length(y_test)*sum(y_test != round(y_test_pred))
+```
+
+Now, we compare this with a logistic regression model.
+```{r}
+log_model <- glm(y_train ~ x_train, family = binomial(link = logit))
+y_log_test_pred <- round(predict(log_model, newdata = data.frame(x_test), type = "response"))
+logistic_misclass_rate <- 1/length(y_test)*sum(y_test != round(y_log_test_pred))
+```
+The table shows the misclassification rates for both models
+```{r}
+misclass <- data.frame(Logistic = logistic_misclass_rate, NeuralNet = NN_misclass_rate)
+knitr::kable(misclass)
+```
+In the table, we see that the logistic regression model performed considerably worse, with a misclassification rate of about $`r round(logistic_misclass_rate,4)*100`$% versus the neural net's misclassification rate of about $`r round(NN_misclass_rate,4)*100`$%.
 
 
 

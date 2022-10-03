@@ -25,20 +25,30 @@ The text shows three way to determine when to use deep learning:
 3: When the sample size of the data is extremely large and the interpretability of the model is not our main priority, we should use Deep Learning to be our first choice.  
 
 ### Section 10.7 Fitting a Neural Network
+When fitting a neural netwrok model, the text provide two general strategies:
+1. Slow Learning
+2. Regularization
 
 #### 10.7.1 Backpropagation
+Backpropagation is a process that the act of diﬀerentiation assigns a fraction of the residual to each of the parameters via the chain rule.
 
 #### 10.7.2 Regularization and Stochastic Gradient Descent
+Stochastic Gradient Descent is a process that we sample a small fraction of n observations' summation of the derivatives of $R_i(\theta)$ with respect to $\beta_k$ and $w_kj$ each time we compute a gradient step if n is large. 
+In this process, Regularization is essential to avoid overfitting. 
 
 #### 10.7.3 Dropout Learning
+Dropout learning is a way to randomly remove a fraction $\phi$ of the units in a layer when fitting the model.
 
 #### 10.7.4 Network Tuning
+There are three ways provided for network tuning in the text, which are "The number of hidden layers, and the number of units per layer", "The number of hidden layers, and the number of units per layer", and "The number of hidden layers, and the number of units per layer".
 
 ### Section 10.8 Interpolation and Double Descent
 Double descent is a phenomenon that the test error has a U-shape before the interpolation threshold is reached, then it descends again as an increasingly flexible model is fit.That may applied to deep learning as well. However, even though double descent can occasionally occur in neural networks model, we do not rely on this behavior typically; meanwhile, it is important to know that the bias-variance trade-oﬀ always holds.
 
 ## 2 Reproduction of ISLR Lab 10.9
+
 ### 10.9.1 A Single Layer Network on the Hitters Data
+
 First, We load the Hitters data and split it to training and test set.
 ```{r}
 Gitters <- na.omit(Hitters)
@@ -47,12 +57,14 @@ set.seed(13)
 ntest <- trunc(n/3)
 testid <- sample(1:n, ntest)
 ```
+
 Then, we fit a linear model and obtain the mean absolute prediction error, which is 254.6687.
 ```{r}
 lfit <- lm(Salary ~., data=Gitters[-testid,])
 lpred <- predict(lfit, Gitters[testid,])
 with(Gitters[testid,], mean(abs(lpred - Salary)))
 ```
+
 Next, we fit a lasso model. Similarly, we calculate the absolute prediction error of the lasso model, which is slightly less than the result of linear model.
 ```{r}
 library(glmnet)
@@ -72,7 +84,7 @@ modnn <- keras_model_sequential() %>%
   layer_dense(units=1)
 ```
 
-```{r, cache=TRUE}
+```{r}
 modnn %>% compile(loss='mse', optimizer=optimizer_rmsprop(), metrics=list('mean_absolute_error'))
 history <- modnn %>% fit(
   x[-testid, ], y[-testid], epochs=200, batch_size=32, 
@@ -124,7 +136,7 @@ modelnn %>%
 modelnn %>% compile(loss='categorical_crossentropy', optimizer=optimizer_rmsprop(), metrics=c("accuracy"))
 ```
 
-```{r, cache=TRUE}
+```{r}
 system.time(
   history <- modelnn %>% 
     fit(x_train, y_train, epochs=30, batch_size=128, validation_split=0.2)
@@ -144,7 +156,7 @@ modellr <- keras_model_sequential() %>%
 #summary(modellr)
 ```
 
-```{r, cache=TRUE}
+```{r}
 modellr %>% compile(loss = "categorical_crossentropy",
      optimizer = optimizer_rmsprop(), metrics = c("accuracy"))
 modellr %>% fit(x_train, y_train, epochs = 30,
@@ -153,7 +165,7 @@ modellr %>% predict(x_test) %>% k_argmax() %>% accuracy(g_test)
 ```
 
 ### 10.9.3 Convolutional Neural Networks
-```{r, cache=TRUE}
+```{r}
 cifar100 <- dataset_cifar100()
 names(cifar100)
 x_train <- cifar100$train$x
@@ -200,7 +212,7 @@ model <- keras_model_sequential() %>%
 #summary(model)
 ```
 
-```{r, cache=TRUE}
+```{r}
 model %>% compile(loss = "categorical_crossentropy",
     optimizer = optimizer_rmsprop(), metrics = c("accuracy"))
 #history <- model %>% fit(x_train, y_train, epochs = 30,
@@ -223,7 +235,7 @@ for (i in 1:num_images) {
 x <- imagenet_preprocess_input(x)
 ```
 
-```{r, cache=TRUE}
+```{r}
 model <- application_resnet50(weights = "imagenet")
 #summary(model)
 ```
@@ -296,7 +308,7 @@ par(mar = c(4, 4, 4, 4), mfrow = c(1, 1))
 plot(-log(fitlm$lambda), acclmv)
 ```
 
-```{r, cache=TRUE}
+```{r}
 model <- keras_model_sequential() %>%
    layer_dense(units = 16, activation = "relu",
       input_shape = c(10000)) %>%
@@ -309,7 +321,7 @@ history <- model %>% fit(x_train_1h[-ival, ], y_train[-ival],
    validation_data = list(x_train_1h[ival, ], y_train[ival]))
 ```
 
-```{r, cache=TRUE}
+```{r}
 history <- model %>% fit(
     x_train_1h[-ival, ], y_train[-ival], epochs = 20,
     batch_size = 512, validation_data = list(x_test_1h, y_test)
@@ -342,7 +354,7 @@ model <- keras_model_sequential() %>%
    layer_dense(units = 1, activation = "sigmoid")
 ```
 
-```{r, cache=TRUE}
+```{r}
 model %>% compile(optimizer = "rmsprop",
     loss = "binary_crossentropy", metrics = c("acc"))
 #history <- model %>% fit(x_train, y_train, epochs = 10,
@@ -416,7 +428,7 @@ model %>% compile(optimizer = optimizer_rmsprop(),
     loss = "mse")
 ```
 
-```{r, cache=TRUE}
+```{r}
 history <- model %>% fit(
     xrnn[istrain,, ], arframe[istrain, "log_volume"],
 #    batch_size = 64, epochs = 200,
@@ -439,7 +451,7 @@ x <- model.matrix(log_volume ~ . - 1, data = arframed)
 colnames(x)
 ```
 
-```{r, cache=TRUE}
+```{r}
 arnnd <- keras_model_sequential() %>%
    layer_dense(units = 32, activation = 'relu',
       input_shape = ncol(x)) %>%
@@ -496,7 +508,7 @@ nnmodel |> compile(
 
 
 We fit the model using a batch size of 30 with 40 epochs. We also further split the data into a third validation set, again with 20%, so we fit the model on 6400 training observations. Then, each epoch is $6400/30\approx 214$ stochastic gradient descent steps. We plot the loss of the model alongside its
-```{r, cache=TRUE}
+```{r}
 history <- nnmodel |>
   fit(x_train, y_train, epochs = 40, batch_size = 30, validation_split = 0.2)
 

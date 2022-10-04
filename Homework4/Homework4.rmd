@@ -39,7 +39,7 @@ where $f_\ell(\mathbf x) = f(\mathbf x; \mathbf\theta_\ell)$ is the function at 
 
 The term "DNN" is a larger family of models in which differential functions are composed into any kind of directed acyclic graph, mapping input to output. A feedforward neural network or multilayer perceptron (MLP) is a simple example where the DAG is a chain. 
 
-An MLP assumes a fixed-dimensional input $\mathbf x \in\mathbb{R}^D$, commonly called ``structured data'' or ``tabular data'' in an $N\times D$ design matrix. 
+An MLP assumes a fixed-dimensional input $\mathbf x \in\mathbb{R}^D$, commonly called "structured data" or "tabular data" in an $N\times D$ design matrix. 
 
 
 #### 13.2 Multilayer Perceptrons (MLPs)
@@ -52,9 +52,172 @@ where $H(a)$ is the heaviside step function or linear threshold function. The de
 
 ##### 13.2.1 The XOR Problem
 
-The goal is to learn a function that computes the exclusive OR of its two binary inputs. The data is not linearly separable, so a perceptron cannot represent this mapping.
+The goal is to learn a function that computes the exclusive OR of its two binary inputs. The data is not linearly separable, so a perceptron cannot represent this mapping. We can overcome this by stacking multiple perceptrons on top of each other. This is a multilayer perceptron. 
+
+To solve the XOR problem, we can use 3 perceptrons $h_1, h_2$, and $y$. There are 2 input nodes $x_1, x_2$, two hidden units $h_1, h_2$, and the output node $y$. The hidden units and output node also receive bias terms from constant nodes. The first hidden unit computes $h_1 = x_1 \land x_2$ by using appropriately set weights. The input nodes $x_1$ and $x_2$ are weighted by 1.0 with bias term -1.5, and so $h_1$ will fire if and only if $x_1$ and $x_2$ are both on, since
+$$
+\mathbf w_1^T\mathbf x - b_1 = [1.0,1.0]^T[1,1] - 1.5 = 0.5 >0.
+$$
+Similarly, $h_2 = x_1 \lor x_2$ and $y = \overline{h_1}\land h_2,$ where $\overline{h} = \neg h$ is the NOT operation. So,
+$$
+y = f(x_1, x_2) = \overline{(x_1\land x_2)}\land (x_1\lor x_2),
+$$
+which is exactly the XOR function. By generalizing this example, an MLP can represent any logical function. 
+
+##### 13.2.2 Differential MLPs
+
+Suppose we define the hidden units $z_l$ at each layer $l$ to be a linear transformation of the hidden units at the previous layer passed elementwise through an activation function $\phi:\mathbb{R}\rightarrow\mathbb{R}$. Then
+$$
+\mathbf z_l = f_l(\mathbf z_{l-1}) = \phi_l(\mathbf b_l + \mathbf W_l\mathbf z_{l-1}),
+$$
+or equivalently,
+$$
+z_{kl} = \phi_l\left(b_{kl}+\sum_{j=1}^{K_{l-1}}w_{jkl}z_{jl-1}\right).
+$$
+The quantity that is passed to the activation function is the pre-activations
+$$
+\mathbf a_l = \mathbf b_l + \mathbf W_l\mathbf z_{l-1},
+$$
+so $\mathbf z_l = \phi_l(\mathbf a_l)$. If $L$ of these functions are composed together, one can compute the gradient of the output using the chain rule. This is also known as backpropagation. Passing the gradient to an optimizer, we can minimize some training objective. 
+
+##### 13.2.3 Activation Functions
+
+Any differentiable activation function can be used at each layer, but using a linear activation function reduces the model to a regular linear model, i.e.
+
+$$
+f(\mathbf x; \mathbf\theta) \propto \mathbf W_L\mathbf W_{L-1}\cdots\mathbf W_1\mathbf x = \mathbf W'\mathbf x,
+$$
+so it is important to use nonlinear activation functions. A few common choices are the sigmoid (logistic function)
+$$
+\sigma(a) = \frac{1}{1+e^{-a}}
+$$
+or the tanh function. However, the sigmoid function saturates at 1 for large positive inputs and at 0 for large negative inputs. The tanh function saturates at -1 and +1. 
+
+In saturated regions, the gradient of the output with respect to the input will be close to zero, so any gradient signal from higher layers will not be able to propagate back to earlier layers. This makes it hard to train the model using gradient descent. 
+
+The most common non-saturating activation function is ReLU,
+$$
+ReLU(a) = \max(a,0) = a\mathbb{I}(a>0).
+$$
+
+##### 13.2.5 The Importance of Depth
+
+It can be shown that an MLP with one hidden layer is a universal function approximator, i.e. it can model any suitably smooth function, given enough hidden units. However, experimental and theoretical arguments have shown that deep networks are more effective than shallow ones. Later layers can use features learned by earlier layers, i.e. it's defined in a hierarchical way. 
+
+##### 13.2.7 Connection with Biology
+
+Consider a model of a single neuron. A neuron $k$ fires, denoted by $h_k\in\{0,1\}$, depending on the activity of its inputs, denoted by $\mathbf x\in\mathbb{R}^D$, as well as the strength of the incoming connections, denoted by $\mathbf w_k\in\mathbb{R}^D$. The weighted sum of the inputs is $a_k = \mathbf w_k^T\mathbf x$, and we can view the weights as "wires" connecting the inputs $x_d$ to neuron $h_k$, which are analogous to dendrites in a real neuron. The weighted sum is then compared to a threshold $b_k$, and if the activation exceeds the threshold, the neuron fires, analogous to a neuron emitting an electrical output or action potential. We can model the behavior of the neuron with $h_k(\mathbf x) = H(\mathbf w_k^T\mathbf x - b_k)$, where $H(a) = \mathbb{I}(a >0)$ is the Heaviside function. This is the McCulloch-Pitts model of the neuron. 
+
+Artificial Neural Networks differ from biological brains in many ways, including:
+\begin{itemize}
+\item Most ANNs use backprop to modify connection strengths, but brains have no way to do this and instead use local update rules for adjusting synaptic strengths
+\item Most ANNs are strictly feedforward, but real brains have many feedback connections, which may act like priors to be combined with bottom up likelihoods from the sensory system to compute posteriors
+\item Most ANNs use simple neurons with weighted sums passed through nonlinear functions, but biological neurons have complex dendritic tree structures with complex spatio-temporal dynamics
+\item Most ANNs are smaller in size and connection numbers than biological brains
+\item Most ANNs model a single function, but biological brains are complex systems which implement many different kinds of functions
+\end{itemize}
+
+As the tasks we want our machines to solve become harder, we may be able to gain insights from neuroscience and cognitive science for how to solve such tasks in an approximate way.
 
 #### 13.3 Backpropagation
+
+The backpropagation algorithm can be used to compute the gradient of a loss function applied to the output of the network with respect to the parameters in each layer. The gradient can then be optimized by another algorithm.
+
+In the case where the computation graph is a simple linear chain of stacked layers, backprop is equivalent to repeated applications of the chain rule in calculus, but it can be generalized to arbitrary directed acyclic graphs, also known as automatic differentiation.
+
+##### 13.3.1 Forward vs Reverse Mode Differentiation
+Consider a mapping of the form $\mathbf o = f(\mathbf x),$ where $\mathbf x\in\mathbb{R}^n$ and $\mathbf o \in \mathbb{R}^m$. We assume $f$ is defined as a composition of continuous functions:
+$$
+f = f_4 \circ f_3\circ f_2 \circ f_1
+$$
+where $f_1:\mathbb{R}^n\rightarrow \mathbb{R}^{m_1}$, $f_2:\mathbb{R}^{m_1}\rightarrow \mathbb{R}^{m_2}$, $f_3:\mathbb{R}^{m_2}\rightarrow \mathbb{R}^{m_3}$, and $f_4:\mathbb{R}^{m_3}\rightarrow \mathbb{R}^{m}$. We can compute the Jacobian $\mathbf J_f(\mathbf x) = \frac{\partial\mathbf o}{\partial\mathbf x}\in \mathbb{R}^{m\times n}$ using the chain rule
+\begin{align*}
+\frac{\partial\mathbf o}{\partial\mathbf x} &= \frac{\partial\mathbf o}{\partial\mathbf x_4}\frac{\partial\mathbf x_4}{\partial\mathbf x_3}\frac{\partial\mathbf x_3}{\partial\mathbf x_2}\frac{\partial\mathbf x_2}{\partial\mathbf x} = \frac{\partial f_4(\mathbf x_4)}{\partial\mathbf x_4}\frac{\partial f_3(\mathbf x_3)}{\partial\mathbf x_3}\frac{\partial f_2(\mathbf x_2)}{\partial\mathbf x_2}\frac{\partial f_1(\mathbf x)}{\partial\mathbf x} \\
+&= \mathbf J_{f_4}(\mathbf x_4)\mathbf J_{f_3}(\mathbf x_3)\mathbf J_{f_2}(\mathbf x_2)\mathbf J_{f_1}(\mathbf x)
+\end{align*}
+
+Recall that
+$$
+\mathbf J_{f}(\mathbf x) = \frac{\partial f(\mathbf x)}{\partial \mathbf x} = 
+\begin{pmatrix}
+\frac{\partial f_1}{\partial x_1} & \cdots & \frac{\partial f_1}{\partial x_n} \\ 
+\vdots & \ddots & \vdots \\
+\frac{\partial f_m}{\partial x_1} & \cdots & \frac{\partial f_m}{\partial x_n}
+\end{pmatrix}
+= \begin{pmatrix}
+\nabla f_1(\mathbf x)^T \\
+\vdots \\
+\nabla f_m(\mathbf x)^T
+\end{pmatrix} = 
+\left(\frac{\partial f}{\partial x_1}, \cdots, \frac{\partial f}{\partial x_n}\right)\in\mathbb{R}^{m\times n},
+$$
+where $\nabla f_i(\mathbf x)^T\in\mathbb{R}^{1\times n}$ is the $i$th row ($i = 1,\dots, m$) and $\frac{\partial f}{\partial x_j}\in\mathbb{R}^m$ is the $j$th column ($j=1,\dots,n$). 
+
+If $n<m$, it's more efficient to compute $\mathbf J_f(\mathbf x)$ for each column $j = 1,\dots, n$ using forward mode differentiation. Below we show the pseudocode.
+\begin{align*}
+\mathbf x_1 :&= \mathbf x \\
+\mathbf v_j :&= \mathbf e_j\in\mathbb{R}^n \text{ for } j=1,\dots, n \\
+\text{for } &k = 1:K \text{ do} \\
+&\mathbf x_{k+1} = f_k(\mathbf x_k) \\
+&\mathbf v_{j} := \mathbf J_{f_k}(\mathbf x_k)\mathbf v_j \text{ for } j=1,\dots, n \\
+\text{Ret}&\text{urn } \mathbf o = \mathbf x_{K+1}, [\mathbf J_f(\mathbf x)]_{:,j} = \mathbf v_j \text{ for } j=1,\dots n
+\end{align*}
+
+If $n>m$, it's more efficient to compute $\mathbf J_f(\mathbf x)$ for each row $i=1,\dots,m$. This can be done using reverse mode differentiation. We show the pseudocode below:
+\begin{align*}
+\mathbf x_1 :&= \mathbf x \\
+\text{for } &k = 1:K \text{ do} \\
+&\mathbf x_{k+1} = f_k(\mathbf x_k) \\
+\mathbf u_i :&= \mathbf e_i\in\mathbb{R}^m \text{ for } i=1,\dots, m \\
+\text{for } &k = K:1 \text{ do} \\
+&\mathbf u_i^T := \mathbf u_i^T\mathbf J_{f_k}(\mathbf x_k) \text{ for } i=1,\dots, m \\
+\text{Ret}&\text{urn } \mathbf o = \mathbf x_{K+1}, [\mathbf J_f(\mathbf x)]_{i,:} = \mathbf u_i^T \text{ for } i=1,\dots m
+\end{align*}
+
+##### 13.3.2 Reverse Mode Differentiation for Multilayer Perceptrons
+
+We now suppose that each layer can have optional parameters $\mathbf\theta_1, \dots, \mathbf\theta_4$, with a mapping of the form $\mathcal{L}:\mathbb{R}^n\rightarrow \mathbb{R}$. Consider the $\ell_2$ loss for a MLP with one hidden layer:
+$$
+\mathcal{L}((\mathbf x, \mathbf y), \mathbf\theta) = \frac{1}{2}||\mathbf y - \mathbf W_2\phi(\mathbf W_1 \mathbf x)||_2^2.
+$$
+We can represent this as the following feedforward model:
+\begin{align*}
+\mathcal{L} &= f_4\circ f_3 \circ f_2 \circ f_1 \\
+\mathbf x_2 &= f_1(\mathbf x, \mathbf\theta_1) = \mathbf W_1\mathbf x \\
+\mathbf x_3 &= f_2(\mathbf x_2,\emptyset) = \phi(\mathbf x_2) \\
+\mathbf x_4 &= f_3(\mathbf x_3, \mathbf\theta_3) = \mathbf W_2\mathbf x_3 \\
+\mathcal{L} &= f_4(\mathbf x_4, \mathbf y) = \frac{1}{2}||\mathbf x_4 - \mathbf y||^2.
+\end{align*}
+
+The notation $f_k(\mathbf x_k, \mathbf\theta_k)$ denotes the function at layer $k$, where $\mathbf x_k$ is the previous output and $\mathbf\theta_k$ are the optional parameters for this layer.
+
+The algorithm for finding the gradient with respect to the parameters in the earlier layers is given by the following pseudocode
+\begin{align*}
+&//\text{ Forward pass} \\
+&\mathbf x_1:= \mathbf x \\
+&\text{for } k = 1:K \text{ do} \\
+&\quad\quad\mathbf x_{k+1} = f_k(\mathbf x_k, \mathbf\theta_k) \\
+&// \text{ Backward pass} \\
+&\mathbf u_{K+1} := 1 \\
+&\text{for } k = K:1 \text{ do } \\
+&\quad\quad\mathbf g_k := \mathbf u_{k+1}^T \frac{\partial f_k(\mathbf x_k, \mathbf\theta_k)}{\partial\mathbf\theta_k} \\
+&\quad\quad\mathbf u_k^T := \mathbf u_{k+1}^T\frac{\partial f_k(\mathbf x_k, \mathbf\theta_k)}{\partial\mathbf x_k} \\
+&// \text{ Output} \\
+&\text{Return } \mathcal{L} = \mathbf x_{K+1}, \nabla_x\mathcal{L} = \mathbf u_1, \{\nabla_{\theta_k}\mathcal{L}=\mathbf g_k: k = 1: K\}
+\end{align*}
+
+
+##### 13.3.4 Computation Graphs
+
+Modern DNNs can combine differentiable components in more complex ways than a chain structure, as in MLPs. The resulting computation graph must correspond to a directed acyclic graph, where each node is a differentiable function of all its inputs. 
+
+In general,
+$$
+\frac{\partial \mathbf o}{\partial \mathbf x_j} = \sum_{k\in \text{Ch}(j)} \frac{\partial \mathbf 0}{\partial \mathbf x_k}\frac{\partial\mathbf x_k}{\partial\mathbf x_j},
+$$
+where the sum is over all children $k$ of node $j$. The $\frac{\partial \mathbf o}{\partial\mathbf x_k}$ gradient vector is already computed for each child $k$, which gets multiplied by the Jacobian $\frac{\partial\mathbf x_k}{\partial \mathbf x_j}$ of each child. 
+
+The computation graph can be computed ahead of time to define a static graph or computed just in time by tracing the execution of the function on an input argument. Dynamic graphs, whose shapes change depending on the values computed by the function, are easier to work with using the second approach. 
 
 
 #### 13.4 Training Neural Networks

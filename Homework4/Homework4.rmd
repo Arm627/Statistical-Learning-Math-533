@@ -6,7 +6,7 @@ output: pdf_document
 ---
 
 ```{r setup, include=FALSE} 
-knitr::opts_chunk$set(warning = FALSE, message = FALSE, eval = FALSE) 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
 options(knitr.kable.NA = '')
 set.seed(123)
 
@@ -347,7 +347,17 @@ Double descent is a phenomenon that the test error has a U-shape before the inte
 
 ### 10.9.1 A Single Layer Network on the Hitters Data
 
-First, We load the Hitters data and split it to training and test set.
+First, we initialize the necessary libraries.
+```{r}
+library(ISLR2)
+library(magrittr)
+library(keras)
+library(tidyverse)
+library(glmnet)
+```
+
+
+For a single layer network on Hitters data, we load the Hitters data and split it to training and test set.
 ```{r}
 Gitters <- na.omit(Hitters)
 n <- nrow(Gitters)
@@ -356,7 +366,7 @@ ntest <- trunc(n/3)
 testid <- sample(1:n, ntest)
 ```
 
-Then, we fit a linear model and obtain the mean absolute prediction error, which is 254.6687.
+As a baseline, we fit a linear model and obtain the mean absolute prediction error, which is 254.6687.
 ```{r}
 lfit <- lm(Salary ~., data=Gitters[-testid,])
 lpred <- predict(lfit, Gitters[testid,])
@@ -368,13 +378,12 @@ Next, we fit a lasso model. Similarly, we calculate the absolute prediction erro
 library(glmnet)
 x <- scale(model.matrix(Salary ~. -1, data=Gitters))
 y <- Gitters$Salary
-
 cvfit <- cv.glmnet(x[-testid, ], y[-testid], type.measure='mae')
 cpred <- predict(cvfit, x[testid,], s='lambda.min')
 mean(abs(y[testid] - cpred))
 ```
 
-Last, we fit the neural network with library keras. As the text written, it is a challenge to get keras running on computer. The error I got is "CondaSSLError: Encountered an SSL error. Most likely a certificate verification issue." Still figure out a way to get this installing. 
+Last, we fit the neural network with library keras.  We set up a model structure describing the network.  The object "modnn" has a single hidden layer with 50 hidden units and a ReLU activation function.  It also has a dropout layer where a random 40% of the 50 activations from the previous layer are set to 0 during every iteration of SGD.  The output layer has no activation function, meaning the model provides a single quantitative output.
 ```{r}
 modnn <- keras_model_sequential() %>% 
   layer_dense(units=50, activation='relu', input_shape = ncol(x)) %>% 
@@ -382,21 +391,27 @@ modnn <- keras_model_sequential() %>%
   layer_dense(units=1)
 ```
 
+Now we minimize squared error loss while tracking mean absolute error on the training data (and validation data if available).
 ```{r}
-modnn %>% compile(loss='mse', optimizer=optimizer_rmsprop(), metrics=list('mean_absolute_error'))
+modnn %>% compile(loss='mse', 
+  optimizer=optimizer_rmsprop(),
+  metrics=list('mean_absolute_error')
+)
 history <- modnn %>% fit(
-  x[-testid, ], y[-testid], epochs=200, batch_size=32, 
+  x[-testid, ], y[-testid], epochs=1500, batch_size=32, 
   validation_data=list(x[testid,], y[testid])
 )
 plot(history, smooth = FALSE)
 ```
 
-
+Finally, we predict from the final model and evaluate its performance on the test data.
 ```{r}
 npred <- predict(modnn, x[testid,])
 mean(abs(y[testid] - npred))
 ```
+
 ### 10.9.2 A Multilayer Network on the MNIST Digit Data
+To construct a multi-layer network from the MNIST digit data, we first load and separate the data.
 ```{r}
 mnist <- dataset_mnist()
 x_train <- mnist$train$x
@@ -404,8 +419,10 @@ g_train <- mnist$train$y
 x_test <- mnist$test$x
 g_test <- mnist$test$y
 dim(x_train)
+dim(x_test)
 ```
 
+Now we "one-hot" encode the class label.
 ```{r}
 x_train <- array_reshape(x_train, c(nrow(x_train), 784))
 x_test <- array_reshape(x_test, c(nrow(x_test), 784))
@@ -413,47 +430,55 @@ y_train <- to_categorical(g_train, 10)
 y_test <- to_categorical(g_test, 10)
 ```
 
+Because NNs can be sensitive to scale of inputs, we rescale each to a range from 0 to 1.
 ```{r}
 x_train <- x_train/255
 x_test <- x_test/255
 ```
 
+Now we fit our neural network.
 ```{r}
 modelnn <- keras_model_sequential()
 modelnn %>% 
-  layer_dense(units=256, activation="relu", input_shape=c(784)) %>%
+  layer_dense(units=256, activation="relu", 
+    input_shape=c(784)) %>%
   layer_dropout(rate=0.4) %>%
   layer_dense(units=128, activation='relu') %>%
   layer_dropout(rate=0.3) %>%
   layer_dense(units=10, activation='softmax')
-
-#summary(modelnn)
+summary(modelnn)
 ```
 
+Next we add model details specifying the fitting algorithm.
 ```{r}
-modelnn %>% compile(loss='categorical_crossentropy', optimizer=optimizer_rmsprop(), metrics=c("accuracy"))
+modelnn %>% compile(loss='categorical_crossentropy', 
+  optimizer=optimizer_rmsprop(), metrics=c("accuracy"))
 ```
 
+Now we supply the training data and fit the model!
 ```{r}
 system.time(
   history <- modelnn %>% 
     fit(x_train, y_train, epochs=30, batch_size=128, validation_split=0.2)
 )
+plot(history, smooth = FALSE)
 ```
 
+We obtain the test error by comparing predicted and true class labels.
 ```{r}
 accuracy <- function(pred, truth) {
    mean(drop(as.numeric(pred)) == drop(truth)) }
 modelnn %>% predict(x_test) %>% k_argmax() %>% accuracy(g_test)
 ```
 
+We can demonstrate multiclass logistic regression by omitting the hidden layers.
 ```{r}
 modellr <- keras_model_sequential() %>%
-   layer_dense(input_shape = 784, units = 10,
-       activation = "softmax")
-#summary(modellr)
+   layer_dense(input_shape = 784, units = 10, activation = "softmax")
+summary(modellr)
 ```
 
+We fit that model here.
 ```{r}
 modellr %>% compile(loss = "categorical_crossentropy",
      optimizer = optimizer_rmsprop(), metrics = c("accuracy"))
@@ -463,6 +488,7 @@ modellr %>% predict(x_test) %>% k_argmax() %>% accuracy(g_test)
 ```
 
 ### 10.9.3 Convolutional Neural Networks
+We fit a CNN to the CIFAR100 data, similar to the MNIST data.
 ```{r}
 cifar100 <- dataset_cifar100()
 names(cifar100)
@@ -474,6 +500,7 @@ dim(x_train)
 range(x_train[1,,, 1])
 ```
 
+We standardize input input range and one-hot encode the response factors, producing a 100 column binary matrix.
 ```{r}
 x_train <- x_train / 255
 x_test <- x_test / 255
@@ -481,6 +508,7 @@ y_train <- to_categorical(g_train, 100)
 dim(y_train)
 ```
 
+Let's peek at some of the training images.
 ```{r}
 library(jpeg)
 par(mar = c(0, 0, 0, 0), mfrow = c(5, 5))
@@ -488,6 +516,7 @@ index <- sample(seq(50000), 25)
 for (i in index) plot(as.raster(x_train[i,,, ]))
 ```
 
+We specify a CNN of moderate size.
 ```{r}
 model <- keras_model_sequential() %>%
    layer_conv_2d(filters = 32, kernel_size = c(3, 3),
@@ -507,19 +536,20 @@ model <- keras_model_sequential() %>%
    layer_dropout(rate = 0.5) %>%
    layer_dense(units = 512, activation = "relu") %>%
    layer_dense(units = 100, activation = "softmax")
-#summary(model)
+summary(model)
 ```
 
+Finally, we can specify the fitting algorithm and fit the model.
 ```{r}
 model %>% compile(loss = "categorical_crossentropy",
     optimizer = optimizer_rmsprop(), metrics = c("accuracy"))
-#history <- model %>% fit(x_train, y_train, epochs = 30,
 history <- model %>% fit(x_train, y_train, epochs = 10,
     batch_size = 128, validation_split = 0.2)
 model %>% predict(x_test) %>% k_argmax() %>% accuracy(g_test)
 ```
 
 ### 10.9.4 Using Pretrained CNN Models
+Now we use a CNN which has been pretrained on the "Imagenet" database to classify natural images.
 ```{r}
 img_dir <- "book_images"
 image_names <- list.files(img_dir)
@@ -533,11 +563,12 @@ for (i in 1:num_images) {
 x <- imagenet_preprocess_input(x)
 ```
 
+Now we load the trained network with 50 layers.
 ```{r}
 model <- application_resnet50(weights = "imagenet")
-#summary(model)
 ```
 
+Now we classify the six images, returning the top three class choices by probability.
 ```{r}
 pred6 <- model %>% predict(x) %>%
    imagenet_decode_predictions(top = 3)
@@ -546,16 +577,14 @@ print(pred6)
 ```
 
 ### 10.9.5 IMDb Document Classification
+We can perform document classification on the IMDb dataset.  First, limit dictionary size to the 10,000 most frequently-used words and tokens.  Also, we unpack the list of lists.
 ```{r}
 max_features <- 10000
 imdb <- dataset_imdb(num_words = max_features)
 c(c(x_train, y_train), c(x_test, y_test)) %<-% imdb
 ```
 
-```{r}
-x_train[[1]][1:12]
-```
-
+We create a function that provides a simple interface to the dictionary.
 ```{r}
 word_index <- dataset_imdb_word_index()
 decode_review <- function(text, word_index) {
@@ -569,6 +598,7 @@ decode_review <- function(text, word_index) {
 decode_review(x_train[[1]][1:12], word_index)
 ```
 
+Next, we "one-hot" encode each document in a list of documents, returning a binary matrix in sparse-matrix format, saving considerable memory.
 ```{r}
 library(Matrix)
 one_hot <- function(sequences, dimension) {
@@ -581,6 +611,7 @@ one_hot <- function(sequences, dimension) {
 }
 ```
 
+Words that appear more than once in any given document get recorded as a one.
 ```{r}
 x_train_1h <- one_hot(x_train, 10000)
 x_test_1h <- one_hot(x_test, 10000)
@@ -588,24 +619,27 @@ dim(x_train_1h)
 nnzero(x_train_1h) / (25000 * 10000)
 ```
 
+We create a validation set of 2,000.
 ```{r}
 set.seed(3)
 ival <- sample(seq(along = y_train), 2000)
 ```
 
+We fit a lasso logistic regression model using glmnet().  We evaluate its performance on the validation data and plot accuracy as a function of the shrinkage parameter $\lambda$.
 ```{r}
-library(glmnet)
 fitlm <- glmnet(x_train_1h[-ival, ], y_train[-ival],
     family = "binomial", standardize = FALSE)
 classlmv <- predict(fitlm, x_train_1h[ival, ]) > 0
 acclmv <- apply(classlmv, 2, accuracy,  y_train[ival] > 0)
 ```
 
+We be sure to adjust the plotting window before making a plot.
 ```{r}
 par(mar = c(4, 4, 4, 4), mfrow = c(1, 1))
 plot(-log(fitlm$lambda), acclmv)
 ```
 
+Now we fit a fully-connected NN with 2 hidden layers, each with 16 units and ReLU activation.
 ```{r}
 model <- keras_model_sequential() %>%
    layer_dense(units = 16, activation = "relu",
@@ -618,7 +652,7 @@ history <- model %>% fit(x_train_1h[-ival, ], y_train[-ival],
    epochs = 20, batch_size = 512,
    validation_data = list(x_train_1h[ival, ], y_train[ival]))
 ```
-
+To compute the test accuracy, we use the test data set as the `validation_data`.
 ```{r}
 history <- model %>% fit(
     x_train_1h[-ival, ], y_train[-ival], epochs = 20,
@@ -626,16 +660,31 @@ history <- model %>% fit(
     )
 ```
 
+```{r}
+model<-keras_model_sequential() %>% 
+  layer_dense(units = 16, activation = "relu", input_shape = c (10000)) %>%
+  layer_dense(units = 16, activation = "relu") %>%
+  layer_dense(units = 1, activation = "sigmoid")
+
+model %>% compile(optimizer = "rmsprop",
+  loss = "binary_crossentropy", metrics="accuracy") 
+
+history<-model %>% fit(x_train_1h[-ival, ], y_train[-ival],
+  epochs = 20, batch_size = 512, validation_data = list(x_train_1h[ival, ], y_train[ival]))
+
+```
 ### 10.9.6 Recurrent Neural Networks
 
 #### Sequential Models for Document Classification
 
+We fit a simple Long- Short-Term Memory RNN for sentiment analysis with the IMDb movie-review data.  First, calculate the document lengths.
 ```{r}
 wc <- sapply(x_train, length)
 median(wc)
 sum(wc <= 500) / length(wc)
 ```
 
+Notice that 91% of documents have fewer than 500 words.  We restrict document lengths to the last L=500 words and pad the beginning of shorter ones with blanks. We peek at the last few words from the first document.
 ```{r}
 maxlen <- 500
 x_train <- pad_sequences(x_train, maxlen = maxlen)
@@ -645,6 +694,7 @@ dim(x_test)
 x_train[1, 490:500]
 ```
 
+The first layer of our RNN one-hot encodes each document as a 500x10,000 matrix, then maps the 10,000 dimensions down to 32.
 ```{r}
 model <- keras_model_sequential() %>%
    layer_embedding(input_dim = 10000, output_dim = 32) %>%
@@ -652,10 +702,10 @@ model <- keras_model_sequential() %>%
    layer_dense(units = 1, activation = "sigmoid")
 ```
 
+The second layer is a LSTM with 32 units, and the output layer is a single sigmoid for binary classification task.
 ```{r}
 model %>% compile(optimizer = "rmsprop",
     loss = "binary_crossentropy", metrics = c("acc"))
-#history <- model %>% fit(x_train, y_train, epochs = 10,
 history <- model %>% fit(x_train, y_train, epochs = 3,
     batch_size = 128, validation_data = list(x_test, y_test))
 plot(history, smooth = FALSE)
@@ -663,6 +713,7 @@ plot(history, smooth = FALSE)
 
 #### Time Series Prediction
 
+Now we fit models for time series prediction.  First, set up the data and standardize variables.
 ```{r}
 xdata <- data.matrix(
  NYSE[, c("DJ_return", "log_volume","log_volatility")]
@@ -671,6 +722,7 @@ istrain <- NYSE[, "train"]
 xdata <- scale(xdata)
 ```
 
+We write functions to create lagged versions of the three time series.
 ```{r}
 lagm <- function(x, k = 1) {
    n <- nrow(x)
@@ -679,6 +731,7 @@ lagm <- function(x, k = 1) {
 }
 ```
 
+Now we create a data frame with lags as well as the response variable.
 ```{r}
 arframe <- data.frame(log_volume = xdata[, "log_volume"],
    L1 = lagm(xdata, 1), L2 = lagm(xdata, 2),
@@ -687,11 +740,13 @@ arframe <- data.frame(log_volume = xdata[, "log_volume"],
  )
 ```
 
+We remove rows with missing values.
 ```{r}
 arframe <- arframe[-(1:5), ]
 istrain <- istrain[-(1:5)]
 ```
 
+Now we fit a linear autoregression model to the training data and predict on the test data, computing $R^2$.
 ```{r}
 arfit <- lm(log_volume ~ ., data = arframe[istrain, ])
 arpred <- predict(arfit, arframe[!istrain, ])
@@ -699,6 +754,7 @@ V0 <- var(arframe[!istrain, "log_volume"])
 1 - mean((arpred - arframe[!istrain, "log_volume"])^2) / V0
 ```
 
+We refit the model including day of week.
 ```{r}
 arframed <-
     data.frame(day = NYSE[-(1:5), "day_of_week"], arframe)
@@ -707,6 +763,7 @@ arpredd <- predict(arfitd, arframed[!istrain, ])
 1 - mean((arpredd - arframe[!istrain, "log_volume"])^2) / V0
 ```
 
+The fit our RNN, we have to reshape the data.  It expects a sequence of L=5 features vectors for each observation, our lagged versions going back L time points.
 ```{r}
 n <- nrow(arframe)
 xrnn <- data.matrix(arframe[, -1])
@@ -716,6 +773,7 @@ xrnn <- aperm(xrnn, c(1, 3, 2))
 dim(xrnn)
 ```
 
+Now we proceed with RNN using 12 hidden units.
 ```{r}
 model <- keras_model_sequential() %>%
    layer_simple_rnn(units = 12,
@@ -726,10 +784,10 @@ model %>% compile(optimizer = optimizer_rmsprop(),
     loss = "mse")
 ```
 
+We fit our model , supplying fit function with test data as validation data.
 ```{r}
 history <- model %>% fit(
     xrnn[istrain,, ], arframe[istrain, "log_volume"],
-#    batch_size = 64, epochs = 200,
     batch_size = 64, epochs = 75,
     validation_data =
       list(xrnn[!istrain,, ], arframe[!istrain, "log_volume"])
@@ -738,17 +796,20 @@ kpred <- predict(model, xrnn[!istrain,, ])
 1 - mean((kpred - arframe[!istrain, "log_volume"])^2) / V0
 ```
 
+We COULD replace the "keras_model_sequential()" command with the following, since "layer_flatten()" simply takes the input sequence and turns it into a long vector of predictors.
 ```{r}
 model <- keras_model_sequential() %>%
    layer_flatten(input_shape = c(5, 3)) %>%
    layer_dense(units = 1)
 ```
 
+We extract  the model matrix x which includes the day_of_week variable.
 ```{r}
 x <- model.matrix(log_volume ~ . - 1, data = arframed)
 colnames(x)
 ```
 
+Finally, we fit a nonlinear AR model.
 ```{r}
 arnnd <- keras_model_sequential() %>%
    layer_dense(units = 32, activation = 'relu',
@@ -758,13 +819,11 @@ arnnd <- keras_model_sequential() %>%
 arnnd %>% compile(loss = "mse",
     optimizer = optimizer_rmsprop())
 history <- arnnd %>% fit(
-#    x[istrain, ], arframe[istrain, "log_volume"], epochs = 100, 
     x[istrain, ], arframe[istrain, "log_volume"], epochs = 30, 
     batch_size = 32, validation_data =
       list(x[!istrain, ], arframe[!istrain, "log_volume"])
   )
 plot(history, smooth = FALSE)
-
 npred <- predict(arnnd, x[!istrain, ])
 1 - mean((arframe[!istrain, "log_volume"] - npred)^2) / V0
 ```
@@ -774,14 +833,14 @@ npred <- predict(arnnd, x[!istrain, ])
 
 ### 10.7
 We fit a neural network with a single hidden layer and 10 units to the `Default` data, and compare its performance to a logistic regression model. First, we scale our data in a model matrix, excluding the usual first column of 1's for an intercept term, and create a separate response vector of 1's and 0's. 
-```{r, eval=TRUE}
+```{r}
 x <- model.matrix(default ~ . -1, data = Default) |> scale()
 y <- ifelse(Default$default == "Yes",1,0)
 ```
 
 Next, we partition our data into training and test datasets, training on a random set of 80% of the data, and testing on the remaining 20%. 
 
-```{r, eval=TRUE}
+```{r}
 n <- nrow(x)
 test_ind <- sample(1:n, n/5)
 
@@ -792,7 +851,7 @@ y_test <- y[test_ind]
 ```
 
 Now, we build the model architecture, defining a single layer model with 10 units in the hidden layer, with the usual ReLU activation function and a dropout rate of 20% for regularization. Since we are predicting a binary response, we use the sigmoid activation function in the output layer. Then, we compile the model, using the binary cross entropy loss function as a measure of fit. 
-```{r, eval=TRUE}
+```{r}
 nnmodel <- keras_model_sequential() |>
   layer_dense(units = 10, activation = "relu", input_shape = ncol(x)) |>
   layer_dropout(rate = 0.20) |>
@@ -806,7 +865,7 @@ nnmodel |> compile(
 
 
 We fit the model using a batch size of 30 with 40 epochs. We also further split the data into a third validation set, again with 20%, so we fit the model on 6400 training observations. Then, each epoch is $6400/30\approx 214$ stochastic gradient descent steps. We plot the loss of the model alongside its accuracy. 
-```{r, eval=TRUE}
+```{r}
 history <- nnmodel |>
   fit(x_train, y_train, epochs = 40, batch_size = 30, validation_split = 0.2)
 
@@ -814,23 +873,24 @@ plot(history, smooth = FALSE)
 ```
 
 Now, we make our predictions on the test set and find the model's misclassification rate.
-```{r, eval=TRUE}
+```{r}
 y_test_pred <- nnmodel |> predict(x_test)
 NN_misclass_rate <- 1/length(y_test)*sum(y_test != round(y_test_pred))
 ```
 
 Now, we compare this with a logistic regression model.
-```{r, eval=TRUE}
-log_model <- glm(y_train ~ x_train, family = binomial(link = logit))
+```{r}
+train <- data.frame(cbind(y_train,x_train))
+log_model <- glm(y_train ~ studentNo + balance + income, family = binomial(link = logit), data = train)
 y_log_test_pred <- round(predict(log_model, newdata = data.frame(x_test), type = "response"))
 logistic_misclass_rate <- 1/length(y_test)*sum(y_test != round(y_log_test_pred))
 ```
 The table shows the misclassification rates for both models
-```{r, eval=TRUE}
+```{r}
 misclass <- data.frame(Logistic = logistic_misclass_rate, NeuralNet = NN_misclass_rate)
 knitr::kable(misclass)
 ```
-In the table, we see that the logistic regression model performed considerably worse, with a misclassification rate of about $`r round(logistic_misclass_rate,4)*100`$% versus the neural net's misclassification rate of about $`r round(NN_misclass_rate,4)*100`$%.
+In the table, we see that the logistic regression model and the neural net model performed almost identically. This is because we can think of a logistic regression model as a single layer neural net with a sigmoid activation function. The optimal parameters for both logistical regression and the single layer neural net with a sigmoid activation function are mathematically identical, so it makes sense that the models performed similarly. 
 
 
 
@@ -852,7 +912,6 @@ x <- imagenet_preprocess_input (x)
 
 ```{r}
 model <- application_resnet50(weights = "imagenet")
-#summary (model)
 ```
 
 ```{r}

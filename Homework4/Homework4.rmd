@@ -6,7 +6,7 @@ output: pdf_document
 ---
 
 ```{r setup, include=FALSE} 
-knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, eval = FALSE) 
 options(knitr.kable.NA = '')
 set.seed(123)
 
@@ -18,31 +18,166 @@ library(glmnet)
 
 ## 1 Murphy Chapter 13 & ISLR Chapter 10 Summaries
 
-### Section 10.6 When to Use Deep Learning
+### Murphy Chapter 13
+
+#### 13.1 Introduction
+
+A simple way of increasing the flexibility of a model is to perform a feature transformation $\mathbf\phi(\mathbf x)$, which then makes the model
+
+$$
+f(\mathbf x; \mathbf\theta) = \mathbf W\mathbf\phi(\mathbf x) + \mathbf b.
+$$
+Having to specify the the feature transformation by hand is limiting, so a natural extension is to give the feature extractor its own parameters $\mathbf\theta_2$ to get
+$$
+f(\mathbf x; \mathbf\theta) = \mathbf W\mathbf\phi(\mathbf x; \mathbf\theta_2) + \mathbf b,
+$$
+where $\mathbf\theta = (\mathbf\theta_1, \mathbf\theta_2)$ and $\mathbf\theta_1 = (\mathbf W, \mathbf b)$. If we repeat this recursively, we compose $L$ functions to get
+$$
+f(\mathbf x; \mathbf\theta) = f_L(f_{L-1}(\cdots(f_1(\mathbf x))\cdots)),
+$$
+where $f_\ell(\mathbf x) = f(\mathbf x; \mathbf\theta_\ell)$ is the function at layer $\ell$. This is the basis of deep neural networks (DNNs).
+
+The term "DNN" is a larger family of models in which differential functions are composed into any kind of directed acyclic graph, mapping input to output. A feedforward neural network or multilayer perceptron (MLP) is a simple example where the DAG is a chain. 
+
+An MLP assumes a fixed-dimensional input $\mathbf x \in\mathbb{R}^D$, commonly called ``structured data'' or ``tabular data'' in an $N\times D$ design matrix. 
+
+
+#### 13.2 Multilayer Perceptrons (MLPs)
+
+A perceptron is a deterministic version of logistic regression, i.e.
+$$
+f(\mathbf x; \mathbf\theta) = \mathbb{I}(\mathbf{w^Tx} + b\geq 0) = H(\mathbf{w^Tx}+b),
+$$
+where $H(a)$ is the heaviside step function or linear threshold function. The decision boundaries represented by perceptrons are linear, so they are limited in what they can represent. 
+
+##### 13.2.1 The XOR Problem
+
+The goal is to learn a function that computes the exclusive OR of its two binary inputs. The data is not linearly separable, so a perceptron cannot represent this mapping.
+
+#### 13.3 Backpropagation
+
+
+#### 13.4 Training Neural Networks
+
+The standard approach to fit deep neural networks to data is to use maximum likelihood estimation, by minimizing the negative log likelihood: 
+  $$
+  L(\theta) = -\log p(D|\theta) = -\sum_{n=1}^N \log p(y_n | x_n ; \theta).
+  $$
+  We can use the back-propagation algorithm to compute the gradient of this loss and pass it on to an pre-made optimizer, but this may not always work well.  We should tune the step size learning rate to ensure convergence to a good solution.  We can mitigate exploding gradients (where gradients become very large) by incorporating gradient clipping, where we cap the magnitude of the gradient if it becomes too large.  However, vanishing gradients can be more difficult to solve: we may modify the activation functions at each layer to prevent gradients from taking extreme values; we may modify the DNN architecture so that updates are additive rather than multiplicative; we may modify the DNN architecture to standardize the activations at each layer; and/or we may carefully choose the initial values of the parameters.
+
+  Regarding non-saturating activation functions, the most common in ReLU, the rectified linear unit, defined as $ReLU(a) = \max(a,0) = aI(a>0)$, which simply "turns off" negative inputs, passing through positive inputs unchanged.  Another is "leaky ReLU" (sometimes called parametric ReLU) $LReLU(a;\alpha) = \max(\alpha a, a)$ where $0<a<1$.  Other popular choices is "ELU" and "SELU", which have the advantage of being smooth functions.  A popular choices for image classification include "swish" (also known as SiLU) and GELU.
+
+  One more solution to the vanishing gradient problem for DNNs is using a ResNet (residual network), a feed-forward model where each layer is a residual block $F_l^{'} = F_l(x)+x$.  This makes the model easier to train while still having the same number of parameters as a model without residual connections.
+
+  We may employ a heuristic initialization scheme to ensure our model doesn't end up with exploding activations or gradiants.  If we sample our initialized parameters from standard normal, we can set $\sigma^2 = \frac{2}{n_{in}+n_{out}}$, a technique known as "Xavier initialization" or "Glorot initialization."  Xavier/Glorot rae recommended for linear, tanh, logistic, and softmax activation functions.  If the number of inputs is equal to the number of outputs, we have the special case of LeCun initialization using the same formula, and this is recommended for SELU.  "He initialization" is related to LeCun, but we would use $\sigma^2 = 2/n_{in}$; this is recommended when using ReLU activation functions.
+  
+#### 13.5 Regularization
+
+  We employ regularization to prevent our DNN from overfitting the training data.  The simplest method is "early stopping," where we stop the training procedure when the error on the validation set starts to increase.  Another is "weight decay," where we impose a prior on the parameters and use MAP estimation, equivalent to $l_2$ regularization of the objective.  A third method is encouraging model sparsity using model compression with $l_1$ regularization (or ARD).  A fourth method is "dropout" where we randomly (per-example) turn off all the outgoing connections from each neuron with probability $p$.  "Dropout can dramatically reduce overfitting and is very widely used."   We may even use dropout at test time (called Monte Carlo dropout), resulting in an ensemble of networks, each with slightly different and sparse graph structures.  In our effort to prevent overfitting the model to training data, we may use implicit regularization, where we explicitly encourage stochastic gradient descent to find "flat" flexible minima, using either entropy SGD, sharpness aware minimization, stochastic weight averaging (SWA), or other related techniques.
+
+### ISLR Chapter 10
+
+Deep learning is currently a very active research area in both the machine learning and artificial intelligence communities.  While neural networks gained significant popularity in the 1980s, the advent of SVMs, boosting, and random forests led neural networks to fall from favor; these methods were more automatic and produced greater results than poorly trained neural networks.  However, after 2010, neural networks again rose in prominence, often under the name "deep learning," thanks to advancements in techniques, increase in available computing power, and high profile successes in image/video classification, speech, and text modeling.  A major part in the increased success of neural network techniques today is the availability of increasingly massive training datasets, thanks to the wide-scale digitization of science and industry.
+
+#### 10.1 Single Layer Neural Networks
+A neural network takes an input vector of $p$ variables $X = (X_1, X_2, ... , X_p)$ and builds a nonlinear function $f(X)$ to predict the response $Y$.  A visual structure of a single-layer feed-forward neural network includes:
+1) A set of $p$ features $X_1, ... X_p$ called the "input layer"
+2) Arrows indicating that the inputs from the input layer feed into the $K$ hidden units in the hidden layer.
+3) A set of $K$ hidden units (note that we get to choose K)
+4) Arrows indicating the hidden layers feeding into the output
+
+The neural network has the form
+$$ f(X) = \beta_0 + \sum_{k=1}^{K} \beta_k h_k $$
+$$ f(X) = \beta_0 + \sum_{k=1}^{K} \beta_k g \left( w_{k0} + \sum_{j=1}^p w_{kj} X_j \right)$$
+First, the $K$ activations $A_k$ in the hidden layer are computed as functions of the input features. $X_p$,
+$$ A_k = h_k(X) = g(w_{k0} + \sum_{j=1}^p w_{kj} X_j) $$
+Here, $g(z)$ is a nonlinear "activation function" specified in advance.  Consider each $A_k$ as a different transformation $h_k(X)$ of the original input features.  Then, all of the $K$ hidden layer feed into the output layer, essentially forming a linear regression model.
+$$ f(X) = \beta_0 + \sum_{k=1}^K \beta_k A_k$$
+In the day of NNs, we favored the sigmoid $\sigma(a)$ activation function for $g$, the same function use in logistic regression to generate probabilities (between 0 and 1) from a linear function.  In 2020 and beyond, the preferred choice of activation function for $g$ is "ReLU" (rectified linear unit), though there are many other options.  ReLU takes the maximum of either the input or 0, essentially transforming all negative inputs into a 0, and passing positive inputs unchanged.  Although ReLU thresholds at zero, because we apply it to a linear function, the constant term $w_{k0}$ translates the inflection point left or right on the number line.
+
+It is essential that our activation function be nonlinear; otherwise, $f(X)$ would collapse to a simple linear model $X_1, ... , X_p$.  Note that interaction effects can arise from even a sum of two nonlinear transformations, a useful feature.
+
+We must estimate all unknown parameters $\beta_k$ and $w_{kj}$ to fit a neural network.  If we see a qualitative response, we typically use squared-error loss, choosing parameters to minimize $\sum_{i=1}^n (y_i-f(x_i))^2$.
+
+#### 10.2 Multilayer Neural Networks
+
+Instead of a single layer, modern neural networks typically have multiple hidden layers with many units per layer.  While a single layer with a large number of units can approximate most functions, the task of discovering good solutions to complex problems is made much easier with multiple layers, each of modest size.
+
+Our neural networks often have multiple outputs. When our output is a class label, we can represent the various labels with a vector $Y=(Y_0, Y_1, ..., Y_m)$ of $m$ dummy variable, each with a "1" in the position corresponding to the label, and "0" in each other position.  This single output selection is called "one-hot encoding.
+
+For a NN of multiple layers, the first hidden layer is defined as it was for a single layer NN.  However, the second (and beyond) layers treats the activations $A_k^m$ of the previous hidden layer as inputs, computing new activations.  The second layer would be:
+$$ A_l^{(2)} = h_l^{(2)}(X) $$
+$$ A_l^{(2)} = g(w_{l0}^{(2)} + \sum_{k=1}^{K_1}w_{lk}^{(2)}A_k^{(1)})$$
+Here, we notice that each of the activations in the second layer $A_l^{(2)} = h_l^{(2)}(X)$ is a function of the input vector $X$. This would also be the case with more hidden layers, since through a chain of transformations, the network builds up fairly complex transformations of $X$ that ultimately feed into the output layer as features.
+
+Notice the use of additional superscript notation, such as $h_l^{(2)}$ and $w_{lj}^{(2)}$, to indicate that the layer the activations and weights (coefficients) belong to layer 2.  Also note the matrix notation $W_1$ represents the entire matrix of weights that feed from the inputs to the first hidden layer $L_1$, so the subscript indicates which layer the weights are used to feed INTO.
+
+The intercept or "bias" term of each set of weights adds an additional parameter per layer.
+
+At the output layer, the first step is to compute a different linear model (similar to the single layer model above) for each response.  For a model with two hidden layers, we would have:
+$$Z_m = \beta_{m0} + \sum_{l=1}^{K_2} \beta_{ml} h_l^{(2)}(X)$$
+$$Z_m = \beta_{m0} + \sum_{l=1}^{K_2} \beta_{ml} A_l^{(2)}$$
+for each of $m$ outputs.  We may use a matrix called $B$ to store all of these final weights.  Note that if these were all separate quantitative (not qualitative) responses, we would simply let each $f_m(X)=Z_m$ and be done.  However, if we wish our estimates to represent class probabilities $f_m (X) = Pf(Y=m|X)$, then we use a "softmax" activation function
+$$f_m(X) = Pr(Y=m|X) = \frac{e^{Z_m}}{\sum_{l=0}^m e^{Z_l}}$$
+for each of $m$ outputs.  The softmax function makes each of $m$ outputs behave like probabilities which are non-negative and together sum to 1.  Even though our goal in this example is to classify each input vector, this model actually estimates a probability for each of the classes.  Then the classifier assigns the input vector to the class with the greatest probability.
+
+Since this example network's response is qualitative, we search for coefficient estimates that minimize the negative multinomial log-likelihood AKA cross-entropy.  If the response were quantitative, we would instead minimize squared-error loss.
+
+#### 10.3 Convolution Neural Networks
+  Convolutional neural networks (CNNs) evolved and gained notoriety for classifying images, though they can show success on a range of problems.  CNNs recognize specific patterns or features anywhere in an image that distinguish each particular object class.  The recognition starts at the granular level of a square handful of of pixels, then builds toward higher-level features, like outlines or body parts.  A convolutional neural network builds up this hierarchy using two specialized types of hidden layers: "convolution layers" and "pooling layers."
+
+  A convolution layer is made up of a large number of convolution filters, each determining whether particular local features are present in an image.  They rely on "convolution" which is repeatedly multiplying matrix elements and then summing the results.  As an example, consider a 4x3 matrix convolved with a 2x2 filter matrix.  The convolution filter is applied to every 2x2 submatrix of the original image in order to obtain the convolved image.  "If a 2x2 submatrix of the original image "resembles" the convolution filter, then it will have a large value in the convolved image.  Note that convolution filters are small $l_1 \times l_2$ arrays, though not necessarily square.  A standard practice for image processing is to use predefined filters for image processing.  However, with other CNNs, the filters are learned for the specific classification task
+  
+  In ISLR's image processing CNN example, the 32x32 pixel input images are in color, so the images have three channels: red, green, and blue, each a 32x32 feature map.  So, a single convolution filter will also have three channels, though they may have different filer weights.  The convolution results from each are summed to form a two-dimensional output feature map.  From here, specific color information is no longer passed directly onward.  If $K$ different convolution filters are used at the first hidden layer, we get K 2D output feature maps, which can be represented as a single 3D feature map with the third dimension being $K$.  Typically, the ReLU activation function is applied to the convolved image.  We may view this as a distinct layer in the CNN, called the "detector layer."
+  
+  Pooling layers condense a large image into a smaller image.  A common method is max pooling, where the single maximum value in each non-overlapping $2 \times 2$ block of pixels in an image is used, reducing the image size by a factor of $2^2$ while still providing location invariance
+  
+  "The number of convolution filters in a convolution layer is like the number of units at a particular hidden layer in a fully-connected neural network."  This defines the number of channels in resulting 3D feature maps.  After the first round of convolutions, we have a feature map with considerably more channels than the three original input channels.  To reduce the size of the feature map, we then apply a max-pool layer. Each subsequent convolving layer takes the 3D feature maps from previous layer as input and treats it like a single multi-channel image.  Since channel feature maps are reduced in size after each pooling, we typically increase the number of filters in the next convolving layer as a counterbalance.  We may repeat several convolving layers before a pool, effectively increasing the dimension of the filter.
+  
+  We repeat these operations until the pooling has reduced each channel feature map to just a few pixels in each dimension, at which point we say the feature maps are "flattened."  Now that the pixel can be treated as separate units, we feed them into one (or more) fully-connected layers before reaching the output layer.  We finish the classification with a softmax activation for the classes.
+  
+  Data augmentation is an important tool for image modeling.  Each training image is replicated several times with slight variations or distortions which leave them easily recognizable by humans, such as mirror, shearing, white noise, or cropping.  Each transformed image keeps the label of the original.  Thus, the training set size is increased considerably, our CNN is somewhat protected against overfitting, and our CNNs is regularized.
+  
+  Much of the work in fitting a CNN is in learning the convolution filters at the hidden layers as these are like the coefficients of a CNN.  For new CNNs, We can use pre-trained hidden layers for new problems with much smaller training sets (we call this weight freezing), and just train the last few layers of the network, requiring much less data.
+  
+#### 10.4 Document Classification
+  To study document classification, consider an example of predicting the positive or negative sentiment of an IMBd movie review.  We need to "featurize" the document, or define a set of predictors.  The "bag-of-words" model is the simplest and most common option here, where the presence or absence of a particular word (from a defined list of common words) is indicated by a 1 or a 0.  If we use a 10,000 word dictionary, then each feature vector will be a 10,000 units long, filled with 0 and 1.   Since most of the matrix's entries are filled with 0, with only a few percent filled with 1, we call this matrix sparse.  Most of the values are the same, so it can be stored efficiently in a spare matrix format.
+  
+  If we use a two-class neural network, we essentially have a nonlinear logistic regression model with a redundancy in the softmax function, since for K classes, we really only need to estimate $K-1$ sets of coefficients.
+  
+#### 10.5 Recurrent Neural Networks
+  When data sources are sequential, they need special treatment when building predictive models.  For example: documents such as books, reviews, articles, and tweets; time series of temperature, rainfall, wind speed, and air quality; financial time series; and recorded speech, music, and other sounds; or handwriting.  "In a recurrent neural network (RNN), the input object X is a sequence.  The output Y can also be a sequence, but may also be a scalar.  A sequence such as $X = {X_1, X_2, ..., X_L}$ may be the input, where each $X_l$ is a vector, perhaps one-hot encoding for the $l$th word on a preset language dictionary.  A hidden-layer sequence may be $\{A_L\}_1^L = \{A_1, A_2, ..., A_L\}$.  Each $A_l$ feeds into the output layer and produces a prediction $O_l$ for $Y$Y.  The most relevant output is $O_L$, the last of the output sequence.  Note that to process each element in the sequence, the same $W$, $U$, and $B$ are used; they are not functions of $l$.  This is a form of "weight sharing" used by RNNs, similar to the use of filters in CNNs.  From beginning to end, the activations $A_l$ accumulate a history of what has been seen before, so that the learned context can be used for prediction.
+  
+  For regression problems, the loss function for an observation $(X,Y)$ is $(Y - O_L)^2$, which interestingly references only the final output $O_L$.  Then, with $n$ input sequence/response pairs $(x_i, y_i)$, the parameters are found by minimizing the sum of squares $\sum_{i=1}^n (y_i-o_{iL})^2$.  Note that for some learning tasks, the response is also a sequence, so the output sequence $\{O_1, O_2, ..., O_L\}$ is explicitly needed.
+
+  We can use RNNs to predict a time series, though we will often find that day-to-day observations are not independent of each other—they may be auto-correlated, where values nearby tend to be similar to each other.  For example, we may seek to predict daily measurements log trade volume $v_t$ on the NYSE.  Consider pairs of observations $(v_t, v_{t-l})$, a "lag" of $l$ days apart.  "If we take all such pairs in the $v_t$ series and compute their correlation coefficient, this gives the autocorrelation at lag $l$."  Interestingly, in these cases, the response variable is also a predictor, since we use past values of $v_t$ to predict values in the future.  We may compare the power of our model against a "straw man", a simple and sensible prediction that can be used as a baseline for comparison.
+
+
+#### Section 10.6 When to Use Deep Learning
 The text shows three way to determine when to use deep learning:
 1: Occam’s razor principle: when faced with several methods that give roughly equivalent performance, pick the simplest.
 2: According to the text, "if we can produce models with the simpler tools that perform as well, they are likely to be easier to fit and understand, and potentially less fragile than the more complex approaches."
 3: When the sample size of the data is extremely large and the interpretability of the model is not our main priority, we should use Deep Learning to be our first choice.  
 
-### Section 10.7 Fitting a Neural Network
+#### Section 10.7 Fitting a Neural Network
 When fitting a neural netwrok model, the text provide two general strategies:
 1. Slow Learning
 2. Regularization
 
-#### 10.7.1 Backpropagation
+##### 10.7.1 Backpropagation
 Backpropagation is a process that the act of diﬀerentiation assigns a fraction of the residual to each of the parameters via the chain rule.
 
-#### 10.7.2 Regularization and Stochastic Gradient Descent
+##### 10.7.2 Regularization and Stochastic Gradient Descent
 Stochastic Gradient Descent is a process that we sample a small fraction of n observations' summation of the derivatives of $R_i(\theta)$ with respect to $\beta_k$ and $w_kj$ each time we compute a gradient step if n is large. 
 In this process, Regularization is essential to avoid overfitting. 
 
-#### 10.7.3 Dropout Learning
+##### 10.7.3 Dropout Learning
 Dropout learning is a way to randomly remove a fraction $\phi$ of the units in a layer when fitting the model.
 
-#### 10.7.4 Network Tuning
+##### 10.7.4 Network Tuning
 There are three ways provided for network tuning in the text, which are "The number of hidden layers, and the number of units per layer", "The number of hidden layers, and the number of units per layer", and "The number of hidden layers, and the number of units per layer".
 
-### Section 10.8 Interpolation and Double Descent
+#### Section 10.8 Interpolation and Double Descent
 Double descent is a phenomenon that the test error has a U-shape before the interpolation threshold is reached, then it descends again as an increasingly flexible model is fit.That may applied to deep learning as well. However, even though double descent can occasionally occur in neural networks model, we do not rely on this behavior typically; meanwhile, it is important to know that the bias-variance trade-oﬀ always holds.
 
 ## 2 Reproduction of ISLR Lab 10.9
@@ -476,14 +611,14 @@ npred <- predict(arnnd, x[!istrain, ])
 
 ### 10.7
 We fit a neural network with a single hidden layer and 10 units to the `Default` data, and compare its performance to a logistic regression model. First, we scale our data in a model matrix, excluding the usual first column of 1's for an intercept term, and create a separate response vector of 1's and 0's. 
-```{r}
+```{r, eval=TRUE}
 x <- model.matrix(default ~ . -1, data = Default) |> scale()
 y <- ifelse(Default$default == "Yes",1,0)
 ```
 
 Next, we partition our data into training and test datasets, training on a random set of 80% of the data, and testing on the remaining 20%. 
 
-```{r}
+```{r, eval=TRUE}
 n <- nrow(x)
 test_ind <- sample(1:n, n/5)
 
@@ -494,7 +629,7 @@ y_test <- y[test_ind]
 ```
 
 Now, we build the model architecture, defining a single layer model with 10 units in the hidden layer, with the usual ReLU activation function and a dropout rate of 20% for regularization. Since we are predicting a binary response, we use the sigmoid activation function in the output layer. Then, we compile the model, using the binary cross entropy loss function as a measure of fit. 
-```{r}
+```{r, eval=TRUE}
 nnmodel <- keras_model_sequential() |>
   layer_dense(units = 10, activation = "relu", input_shape = ncol(x)) |>
   layer_dropout(rate = 0.20) |>
@@ -507,8 +642,8 @@ nnmodel |> compile(
 ```
 
 
-We fit the model using a batch size of 30 with 40 epochs. We also further split the data into a third validation set, again with 20%, so we fit the model on 6400 training observations. Then, each epoch is $6400/30\approx 214$ stochastic gradient descent steps. We plot the loss of the model alongside its
-```{r}
+We fit the model using a batch size of 30 with 40 epochs. We also further split the data into a third validation set, again with 20%, so we fit the model on 6400 training observations. Then, each epoch is $6400/30\approx 214$ stochastic gradient descent steps. We plot the loss of the model alongside its accuracy. 
+```{r, eval=TRUE}
 history <- nnmodel |>
   fit(x_train, y_train, epochs = 40, batch_size = 30, validation_split = 0.2)
 
@@ -516,19 +651,19 @@ plot(history, smooth = FALSE)
 ```
 
 Now, we make our predictions on the test set and find the model's misclassification rate.
-```{r}
+```{r, eval=TRUE}
 y_test_pred <- nnmodel |> predict(x_test)
 NN_misclass_rate <- 1/length(y_test)*sum(y_test != round(y_test_pred))
 ```
 
 Now, we compare this with a logistic regression model.
-```{r}
+```{r, eval=TRUE}
 log_model <- glm(y_train ~ x_train, family = binomial(link = logit))
 y_log_test_pred <- round(predict(log_model, newdata = data.frame(x_test), type = "response"))
 logistic_misclass_rate <- 1/length(y_test)*sum(y_test != round(y_log_test_pred))
 ```
 The table shows the misclassification rates for both models
-```{r}
+```{r, eval=TRUE}
 misclass <- data.frame(Logistic = logistic_misclass_rate, NeuralNet = NN_misclass_rate)
 knitr::kable(misclass)
 ```

@@ -1,0 +1,68 @@
+---
+title: "Midterm Project"
+author: "Brandon Amaral, Monte Davityan, Nicholas Lombardo, Hongkai Lu"
+date: "10/18/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+options(knitr.kable.NA = '')
+set.seed(123)
+```
+
+## 1 ISLR Chapter 9 Summary
+
+### 9 Introduction
+### 9.1 Maximal Margin Classifier 
+#### 9.1.1 What Is a Hyperplane?
+#### 9.1.2 Classification Using a Separating Hyperplane
+#### 9.1.3 The Maximal Margin Classifier 
+#### 9.1.4 Construction of the Maximal Margin Classifier 
+#### 9.1.5 The Non-separable Case 
+### 9.2 Support Vector Classifiers
+#### 9.2.1 Overview of the Support Vector Classifier 
+#### 9.2.2 Details of the Support Vector Classifier 
+### 9.3 Support Vector Machines 
+#### 9.3.1 Classification with Non-Linear Decision Boundaries 
+#### 9.3.2 The Support Vector Machine 
+#### 9.3.3 An Application to the Heart Disease Data 
+#### 9.4 SVMs with More than Two Classes 
+#### 9.4.1 One-Versus-One Classification 
+#### 9.4.2 One-Versus-All Classification
+### 9.5 Relationship to Logistic Regression 
+
+## 2 Murphy Section 17.3 Summary
+
+### 17.3.1 Large margin classifiers
+### 17.3.2 The dual problem 
+### 17.3.3 Soft margin classifiers 
+### 17.3.4 The kernel trick 586
+### 17.3.5 Converting SVM outputs into probabilities 
+### 17.3.6 Connection with logistic regression 
+### 17.3.7 Multi-class classification with SVMs 
+### 17.3.8 How to choose the regularizer C 
+### 17.3.9 Kernel ridge regression 
+### 17.3.10 SVMs for regression 
+ 
+## 3 ISLR Section 9.6 Lab Repo
+
+### 9.6 Lab: Support Vector Machines
+### 9.6.1 Support Vector Classifier
+### 9.6.2 Support Vector Machine
+### 9.6.3 ROC Curves
+### 9.6.4 SVM with Multiple Classes
+### 9.6.5 Application to Gene Expression Data
+
+## 4 ISLR Problem 9.6
+
+## 5 Murphy Chapter 18 Summary
+
+## 6 Alzheimer's data Problem
+
+
+
+
+
+
+

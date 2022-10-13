@@ -47,7 +47,6 @@ set.seed(123)
  
 ## 3 ISLR Section 9.6 Lab Repo
 
-### 9.6 Lab: Support Vector Machines
 ### 9.6.1 Support Vector Classifier
 ### 9.6.2 Support Vector Machine
 ### 9.6.3 ROC Curves

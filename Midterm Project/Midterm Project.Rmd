@@ -270,8 +270,254 @@ table(pred.te , dat.te$y)
 
 ## 6 Alzheimer's data Problem
 
+```{r}
+# Libraries
+library(tidymodels)
+library(tidyverse)
+library(hash)
+library(doParallel)
+library(ranger)
+library(baguette)
+library(xgboost)
+library(mltools)
+```
 
 
+```{r}
+# Read in data
+alz <- read.csv("alzheimer_data.csv")
+
+head(alz)
+
+dim(alz)
+
+#summary(alz)
+```
+
+```{r}
+# Get Count Of Unique Results (if the count is low its probably a factor) (This is used below in the data cleaning section)
+
+# The reason for this is because there are many variables that are integers that should be factors and I am too lazy to manually convert them to factors so this does it for me based on the threshold of unique values
+countResults <- hash()
+for (var in colnames(alz)) {
+  countResults[[var]] <- nrow(unique(alz[var]))
+}
+
+# Note from the results below it seems having unique elements less than 10 is a good enough threshold to determine if a variable is a factor or not
+print(countResults)
+
+factoredVars <- character()
+for (var in colnames(alz)) {
+  if(nrow(unique(alz[var])) <= 10) {
+    factoredVars <- append(factoredVars, var)
+  }
+}
+
+print(factoredVars)
+```
+
+
+```{r}
+# Data cleaning (mainly just converting ints to factors)
+alz <- alz %>% 
+  select(-id) %>% 
+  mutate_at(factoredVars, factor)
+```
+
+
+```{r}
+# Split into training and testing
+set.seed(123)
+split <- initial_split(alz)
+train_df <- training(split)
+test_df <- testing(split)
+```
+
+## Random Forest
+
+```{r}
+# Random Forest
+
+# The reason for not tuning trees is because it takes too long
+spec <- rand_forest(
+  mtry = tune(),
+  trees = 500,
+  min_n = tune()) %>%
+  set_mode("classification") %>%
+  set_engine("ranger")
+
+recipe <- recipe(diagnosis ~ ., data = train_df)
+
+wf <- workflow() %>%
+  add_recipe(recipe) %>% 
+  add_model(spec)
+
+folds <- vfold_cv(train_df, v = 10)
+```
+
+```{r}
+registerDoParallel()
+
+tune_res <- tune_grid(
+  wf,
+  resamples = folds,
+  grid = 10
+)
+
+tune_res
+```
+
+```{r}
+best_auc <- select_best(tune_res, "roc_auc")
+
+final_rf <- finalize_model(
+  spec,
+  best_auc
+)
+
+final_rf
+```
+
+```{r}
+set.seed(123)
+final_wf <- workflow() %>%
+  add_recipe(recipe) %>%
+  add_model(final_rf)
+
+final_res <- final_wf %>%
+  last_fit(split)
+
+final_res %>%
+  collect_metrics()
+```
+**The tuned random forest model produces test misclassification rate of 0.1540741**
+
+## Bagging
+
+```{r}
+# Bagging
+spec_bagging <- bag_tree(
+  mode = "classification",
+  cost_complexity = tune(),
+  tree_depth = tune(),
+  min_n = tune()) %>% 
+  set_engine("rpart")
+
+wf_bagging <- workflow() %>%
+  add_recipe(recipe) %>% 
+  add_model(spec_bagging)
+```
+
+```{r}
+registerDoParallel()
+
+tune_res_bagging <- tune_grid(
+  wf_bagging,
+  resamples = folds,
+  grid = 10
+)
+
+tune_res_bagging
+```
+
+
+```{r}
+best_auc_bagging <- select_best(tune_res_bagging, "roc_auc")
+
+final_bag <- finalize_model(
+  spec_bagging,
+  best_auc_bagging
+)
+
+final_bag
+```
+
+```{r}
+set.seed(123)
+final_wf_bag <- workflow() %>%
+  add_recipe(recipe) %>%
+  add_model(final_bag)
+
+final_res_bag <- final_wf_bag %>%
+  last_fit(split)
+
+final_res_bag %>%
+  collect_metrics()
+```
+
+**The tuned bagging model produces test misclassification rate of 0.1688889**
+
+
+## Boosting
+```{r}
+# Boosting
+
+# The reason for not tuning trees is because it takes too long
+spec_boosting <- boost_tree(
+  mode = "classification",
+  mtry = tune(),
+  trees = 500,
+  min_n = tune()) %>% 
+  set_engine("xgboost")
+
+# Since boosting (specifically xgboost) cant handle factors, convert the categorical variables into onehot encoded values
+onehot_alz <- data.table::data.table(alz) %>% one_hot(cols = factoredVars[2:length(factoredVars)])
+  
+# Split into training and testing again with the onehot encoded data
+set.seed(123)
+split <- initial_split(onehot_alz)
+train_df <- training(split)
+test_df <- testing(split)
+
+folds <- vfold_cv(train_df, v = 10)
+
+recipe_boost <- recipe(diagnosis ~ ., data = train_df) 
+
+wf_boosting <- workflow() %>%
+  add_recipe(recipe_boost) %>% 
+  add_model(spec_boosting)
+```
+
+```{r}
+registerDoParallel()
+
+tune_res_boosting <- tune_grid(
+  wf_boosting,
+  resamples = folds,
+  grid = 10
+)
+
+tune_res_boosting
+```
+
+```{r}
+best_auc_boosting <- select_best(tune_res_boosting, "roc_auc")
+
+final_boost <- finalize_model(
+  spec_boosting,
+  best_auc_boosting
+)
+
+final_boost
+```
+
+```{r}
+set.seed(123)
+final_wf_boost <- workflow() %>%
+  add_recipe(recipe_boost) %>%
+  add_model(final_boost)
+
+final_res_boost <- final_wf_boost %>%
+  last_fit(split)
+
+final_res_boost %>%
+  collect_metrics()
+```
+
+**The tuned boosting model produces test misclassification rate of 0.157037**
+
+
+**Comparing the three models: Random forest, bagging and boosting had misclassification rate of 0.1540741, 0.1688889, and 0.157037 respectively. Therefore, the Random Forest was the best model when comparing misclassification rate.**
 
 
 

@@ -3,9 +3,9 @@ title: "Midterm Project"
 author: "Brandon Amaral, Monte Davityan, Nicholas Lombardo, Hongkai Lu"
 date: "10/18/2022"
 output:
+  word_document: default
   html_document:
     df_print: paged
-  word_document: default
   pdf_document: default
 ---
 
@@ -44,7 +44,7 @@ Thus, we can think of the hyperplane as dividing p-dimensional space into two ha
 
 #### 9.1.2 Classification Using a Separating Hyperplane
 \
-First, suppose that we have a n X p data matrix $\mathbf X$ that consists of n training observations in a p-dimensinal space. The training observations fall into two groups, where $ y_{1}, \dot, y_{n} \in {-1,1} $ and −1 represents one class and 1 the other class. 
+First, suppose that we have a n X p data matrix $\mathbf X$ that consists of n training observations in a p-dimensinal space. The training observations fall into two groups, where $ y_{1}, \dots, y_{n} \in {-1,1} $ and −1 represents one class and 1 the other class. 
 Second, try to constuct a separating hyperplane which is a hyperplane that separates the training observations perfectly according to their class labels. That separating hyperplane has below property:
 
 1: 
@@ -59,26 +59,130 @@ Next, we use the constructed separating hyperplane to construct a very natural c
 
 
 #### 9.1.3 The Maximal Margin Classifier 
-#### 9.1.4 Construction of the Maximal Margin Classifier 
-#### 9.1.5 The Non-separable Case 
+\
+The goal is to construct a classifier based upon a separating hyperplane. Instinctively, the maximal margin hyperplane is the separating hyperplane that optimal separating hyperplane is farthest from the training observations. Then, we can classify a test observation based on which side of the maximal margin hyperplane it lies, which is the maximal margin classifier.
 
-### 9.2 Support Vector Classifiers
-#### 9.2.1 Overview of the Support Vector Classifier 
+#### 9.1.4 Construction of the Maximal Margin Classifier 
+\
+Suppose we have a set of n training observations $ x_{1}, \dots, x_{n} \in \mathbb{R}^p $ and associated class labels $ y_{1}, \dots, y_{n} \in {-1,1} $ , then the maximal margin hyperplane is to solve the optimization problem as follows:
+$$
+  (9.9): \quad \underset {\beta_{0},\beta_{1},\dots,\beta_{p},M} {maximize} M
+$$
+$$
+  (9.10): \quad subject \quad to \quad \sum_{j=1}^{p}\beta_{j}^2 =1
+$$
+$$
+  (9.11): \quad y_{i}(\beta_{0}+\beta_{1}x_{i1}+\beta_{2}x_{i2}+\dots+\beta_{p}x_{ip}) \geq M \quad \forall i=1,\dots,n)
+$$
+\
+First, use the inequation (9.11) to constrain each observation liles on the correct side of the hyperplane. Second, both (9.10) and (9.11) ensure that each observation is on the correct side of the hyperplane and at least a distance M from the hyperplane. Last, M represents the margin of our hyperplane, and the
+optimization problem chooses $\beta_{0},\beta_{1},\dots,\beta_{p}$ to maximize M.
+
+
+#### 9.1.5 The Non-separable Case 
+\
+If a separating hyperplane exists, we can use the maximal margin classifier to perform classification. But in many cases, there is no separating hyperplane. The next section is focus on how to generalize the maximal margin classifier to the non-separable case, which is known as the support vector classifier.
+
+#### 9.2.1 Overview of the Support Vector Classifier
+\
+Suppose we have two classes observations. Instead of perfectly separating the two classes, the support vector classifier is more interesting on the greater robustness to individual observations and better classification of most of the training observations. In other words, the support vector classifier allows some observations to be lie on the incorrect side of the margin or even the incorrect side of the hyperplane. 
+
 #### 9.2.2 Details of the Support Vector Classifier 
+\
+Similar to "Construction of the Maximal Margin Classifier", then the Support Vector Classifier is to solve the optimization problem as follows:
+$$
+  (9.12): \quad \underset {\beta_{0},\beta_{1},\dots,\beta_{p},\epsilon_{1},\dots,\epsilon_{n},M} {maximize} M
+$$
+$$
+  (9.13): \quad subject \; to \; \sum_{j=1}^{p}\beta_{j}^2 =1
+$$
+$$
+  (9.14): \quad y_{i}(\beta_{0}+\beta_{1}x_{i1}+\beta_{2}x_{i2}+\dots+\beta_{p}x_{ip}) \geq M(1-\epsilon_{i}) \quad \forall i=1,\dots,n)
+$$
+$$
+  (9.15): \epsilon_{i} \geq 0, \quad \sum_{i=1}^{n}\epsilon_{i}\leq C, where \; C \; is \; a \; nonnegative \; tuning \; parameter
+$$
+\
+First, we use the slack variable $ \epsilon_{i} $ to locate the ith observation relative to the hyperplane and relative to the margin as follow:
+\
+(1): If $\epsilon_{i} = 0$ then the ith observation is on the correct side of the margin
+\
+(2): If $\epsilon_{i} \geq 0$ then the ith observation is on the wrong side of the margin
+\
+(3): If $\epsilon_{i} \geq 1$ then it is on the wrong side of the hyperplane.
+\
+\
+Then, we use the C in (9.15) to be the controller as bias-variance trade-oﬀ of the statistical learning technique. According to the text, we know "When C is small, we seek narrow margins that are rarely violated; this amounts to a classifier that is highly fit to the data, which may have low bias but high variance. On the other hand, when C is larger, the margin is wider and we allow more violations to it; this amounts to fitting the data less hard and obtaining a classifier that is potentially more biased but may have lower variance."
+\
+\
+At last, the observations that lie directly on the margin or on the wrong side of the margin for their class are support vectors, which affect and result the support vector classifier. 
 
 ### 9.3 Support Vector Machines 
 #### 9.3.1 Classification with Non-Linear Decision Boundaries 
+
+In the two-class setting, the support vector classifier is a natural approach  for classification if the boundary between the two classes is liner. For non-linear class boundaries, we could enlarge the feature space using quadratic, cubic, and even higher-order polynomial functions of the predictors to fit a support vector classifier. 
+\
+\
+Suppose we have a set of n training observations $ x_{1}, \dots, x_{n} \in \mathbb{R}^p $ and associated class labels $ y_{1}, \dots, y_{n} \in {-1,1} $, we use 2p features to fit (9.12) - (9.15)
+$$
+  X_{1},X_{1}^2,X_{2},X_{2}^2,\dots,X_{p},X_{p}^2.
+$$
+Then, we have
+$$
+  (9.16): \quad \underset {\beta_{0},\beta_{11},\beta_{12},\dots,\beta_{p1},\beta_{p2},\epsilon_{1},\dots,\epsilon_{n},M} {maximize} M
+$$
+$$
+  subject \; to \; y_{i}(\beta_{0}+\sum_{j=1}^{p}\beta_{j1}x_{ij}^2+\sum_{j=1}^{p}\beta_{j2}x_{ij}^2) \geq M(1-\epsilon_{i})
+$$
+$$
+  \sum_{i=1}^{n}\epsilon_{i}\leq C, \quad \epsilon_{i} \geq 0, \quad \sum_{j=1}^{p}\sum_{k=1}^{2}\beta_{jk}^2=1
+$$
+
 #### 9.3.2 The Support Vector Machine 
+
+By using kernels, the extension of the support vector classifier that results from enlarging the feature space in a specific way is known as The support vector machine (SVM). Suppose we have a support vector classifier can be represented as
+$$
+  f(x) = \beta_{0}+\sum_{i \in S}\alpha_{i} K\langle x, x_{i}\rangle
+$$
+(1): If we take a linear kernel $$ K\langle x, x_{i}\rangle = \sum_{j=1}^{p}x_{ij}x_{i'j}  $$  , it is a linear support vector classifier.
+\
+(2): If we take a polynomial kernel of degree d  $$  K\langle x, x_{i}\rangle = (1 + \sum_{j=1}^{p}x_{ij}x_{i'j})^d  $$  , it is a non-linear support vector classifier.
+\
+(3): If we take a radial kernel $$ K\langle x, x_{i}\rangle = exp(-\gamma \sum_{j=1}^{p}(x_{ij}-x_{i'j})^2)  $$  , it is a non-linear support vector classifier.
+
 #### 9.3.3 An Application to the Heart Disease Data 
 
+In this section, we fit LDA and SVM to the heart disease training data. By using ROC curves, we can see the SVM using a polynomial kernel of degree d = 1 is slightly superior than LDA. Also, Figure 9.10 displays ROC curves for SVMs using a radial kernel with three values of $ \gamma $, which indicates while a more flexible method will often produce lower training error rates and that does not improve the performance on test data. 
+
 ### 9.4 SVMs with More than Two Classes 
-#### 9.4.1 One-Versus-One Classification Dai
+
+The goal is to extend SVMs to the more general case where we have some arbitrary number of classes. The text introduces two methods which are the one-versus-one and one-versus-all approaches. 
+
+#### 9.4.1 One-Versus-One Classification
+
+Suppose there are K > 2 classes, we would like to perform classification using a one-versus-one or all-pairs approach constructs $\binom{k}{2}$ SVMs. 
+First, classify a test observation using each of the $\binom{k}{2}$ classifiers. Second, tally the number of times that the test observation is assigned to each
+of the K classes. Last, assign the test observation to the class to which it was most frequently assigned in these $\binom{k}{2}$ pairwise classifications to obtain the final classification.
+
 #### 9.4.2 One-Versus-All Classification
+
+In the one-versus-all approach, when we fit K SVMs, we compare one of the K classes to the remaining K-1 classes each time. 
 
 ### 9.5 Relationship to Logistic Regression 
 
-## 2 Murphy Section 17.3 Summary
+First, we have below ridge regression and the lasso function:
+$$
+  L(X, y, \beta) = \sum_{i=1}^{n}(y_{i}-\beta_{0}-\sum_{j=1}^{p}x_{ij}\beta_{j})^2
+$$
 
+Then, we introduce the loss function of SVM:
+$$
+  L(X, y, \beta) = \sum_{i=1}^{n} max[0,1 - y_{i}(\beta_{0}+\beta_{1}x_{i1}+\beta_{2}x_{i2}+\dots+\beta_{p}x_{ip})]
+$$
+
+The hinge loss function of SVM is closely related to the loss function used in logistic regression. Due to the similarities, the results of logistic regression and the support vector classifier are often similar. SVMs tend to behave better than logistic regression if the classes are well separated; while as, logistic regression is often preferred if there is in more overlapping regimes.
+
+## 2 Murphy Section 17.3 Summary
 ### 17.3.1 Large margin classifiers
 ### 17.3.2 The dual problem 
 ### 17.3.3 Soft margin classifiers 
@@ -88,7 +192,7 @@ Next, we use the constructed separating hyperplane to construct a very natural c
 ### 17.3.7 Multi-class classification with SVMs 
 ### 17.3.8 How to choose the regularizer C 
 ### 17.3.9 Kernel ridge regression 
-### 17.3.10 SVMs for regression 
+### 17.3.10 SVMs for regression  
  
 ## 3 ISLR Section 9.6 Lab Repo
 In this lab, we demonstrate the support vector classifier and the support vector machine (SVM).

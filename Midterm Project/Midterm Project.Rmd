@@ -3,9 +3,9 @@ title: "Midterm Project"
 author: "Brandon Amaral, Monte Davityan, Nicholas Lombardo, Hongkai Lu"
 date: "10/18/2022"
 output:
+  word_document: default
   html_document:
     df_print: paged
-  word_document: default
   pdf_document: default
 ---
 
@@ -15,7 +15,6 @@ options(knitr.kable.NA = '')
 ```
 
 ## 1 ISLR Chapter 9 Summary
-
 ### 9.1 Maximal Margin Classifier 
 
 This section is focus on definition and introduction the concept of an optimal separating hyperplane.
@@ -184,15 +183,114 @@ The hinge loss function of SVM is closely related to the loss function used in l
 
 ## 2 Murphy Section 17.3 Summary
 ### 17.3.1 Large margin classifiers
-### 17.3.2 The dual problem 
+
+Suppose we have a binary classifier with the form $ h(x) = sign(f(x)) $, then the decision boundary is given by a linear function as follow:
+$$
+  f(\boldsymbol x) =  \boldsymbol w ^T \boldsymbol x + w_{0}
+$$
+The goal is to obtain the large margin classifier, which described below:
+
+$$
+  \underset{\boldsymbol w, w_{0}}{max} \frac{1}{||w||} \min_{n=1}^{N_{\mathcal{D}} }[\hat{y_{n}}(\boldsymbol w ^T \boldsymbol x + w_{0})]
+$$
+
+
+After conducted some transformation, the final objective becomes 
+
+$$
+  \underset{\boldsymbol w, w_{0}}{min} \frac{1}{2} ||w||^2 \quad s.t. \quad \hat{y_{n}}(\boldsymbol w ^T \boldsymbol x + w_{0}) \geq1, \; n=1: N_{\mathcal{D}}
+$$
+
+### 17.3.2 The dual problem
+
+The final objective of the large margin classifier is a standard quadratic problem, and we can convert it to a dual problem in convex optimization. 
+The generalized Lagrangian yields the following after plugging $ \hat{w} = \sum_{n=1}^{N} \hat{\alpha_{n}} \tilde{y_n} x_{n} $ and $ 0 = \sum_{n=1}^{N} \hat{\alpha_{n}} \tilde{y_n}  $
+$$
+  \mathcal{L}(\hat{\boldsymbol w}, \hat{w_{0}}, \alpha) = - \frac{1}{2} \sum_{i=1}^{N} \sum_{j=1}^{N} \alpha_{i}\alpha_{j} \tilde{y_i} \tilde{y_j} x_{i}^Tx_{j} + \sum_{n=1}^{N} \alpha_n
+$$
+We use the following formula to perform prediction:
+$$
+  f(x; \hat{\boldsymbol w}, \hat{w_{0}}) =  \hat{\boldsymbol w} ^T \boldsymbol x + \hat{w_{0}} = \sum_{n \in S} \alpha_{n} \tilde{y_n} x_{n}^Tx + \hat{w_{0}}
+$$
+
 ### 17.3.3 Soft margin classifiers 
-### 17.3.4 The kernel trick 586
+
+Slack variables introduced if the data is not lineraly separable. We use the soft margin constraints to replace the ard constraints, then we have the new objectve as following:
+$$
+  \underset{\boldsymbol w, w_{0}, \boldsymbol \xi}{min} \frac{1}{2} ||w||^2 + C \sum_{n=1}^{N_{\mathcal{D}}} \xi_n \quad s.t. \quad \xi_n \geq0,\; \hat{y_{n}}(\boldsymbol w ^T \boldsymbol x + w_{0}) \geq1 - \xi_n
+$$
+Correspondingly, we have the Lagrangian for the soft margin classifier after optimizing out $ \boldsymbol w, w_0, \; and \; \boldsymbol \xi $,
+
+$$
+  \mathcal{L}(\alpha) = \sum_{i=1}^{N} \alpha_i - \frac{1}{2} \sum_{i=1}^{N} \sum_{j=1}^{N} \alpha_{i}\alpha_{j} \tilde{y_i} \tilde{y_j} x_{i}^Tx_{j} 
+$$
+
+### 17.3.4 The kernel trick
+
+By rewriting the prediction function, we have
+$$
+  f(x) =  \hat{\boldsymbol w} ^T \boldsymbol x + \hat{w_{0}} = \sum_{n \in S} \alpha_{n} \tilde{y_n} x_{n}^Tx + \hat{w_{0}} =  \sum_{n \in S} \alpha_{n} \tilde{y_n} \mathcal{K}(x_n,x) + \hat{w_{0}}
+$$
+The bias term as following after kernelizing
+
+$$
+  \hat{w_{0}} = \frac{1}{|S|} \sum_{n \in S}(\tilde{y_i} - \hat{\alpha}_{j} \tilde{y_j} \mathcal{K}(x_j,x_i) ) 
+$$
+
 ### 17.3.5 Converting SVM outputs into probabilities 
+
+The goal is to convert the output of an SVM to a probability. We have following probability
+$$
+  p(y=1 | \boldsymbol x, \boldsymbol \theta) = \sigma(af(\boldsymbol x)+b)
+$$
+where a, b can be estimated by maximum likelihood on a separate validation set.
+
 ### 17.3.6 Connection with logistic regression 
+
+For the data points lie on the correct side of the decision boundary, we have $ \xi_n = 0 $; for the others, we have $ \xi_n = 1 - \tilde{y}_nf(\boldsymbol x_n) $. Then, we can rewrite the bojective euqation of Soft margin classifiers as following:
+$$
+  \mathcal{L}(w) = \sum_{i=1}^{N} \ell_{hinge} (\tilde{y_n},f(x_n)) + \lambda ||w||^2
+$$
+where $ \lambda = (2C)^{-1} $ and $\ell_{hinge}$  is the hinge loss function as below:
+$$
+  \ell_{hinge} (\tilde{y_n},\eta) = max(0,1-\tilde{y_n}\eta)
+$$
+Compared to the logistic regression oprimizes:
+$$
+  \mathcal{L}(w) = \sum_{i=1}^{N} \ell_{ll} (\tilde{y_n},f(x_n)) + \lambda ||w||^2
+$$
+Where the log loss function as below:
+$$
+  \ell_{ll} (\tilde{y_n},\eta) = log(1+e^{-\tilde{y_n}\eta})
+$$
+There are two major difference between the log loss and hinge loss:
+\
+1: The hinge loss is piecewise linear, so we cannot use regular gradient methods to optimize it. 
+\
+2: The hinge loss has a region where it is strictly 0; this results in sparse estimates
+
 ### 17.3.7 Multi-class classification with SVMs 
+
+Similar to ISLR, for multi-class classification, Murphy introduces two methods which are the one-versus-the-rest and one-versus-one  approaches. 
+
 ### 17.3.8 How to choose the regularizer C 
+
+Typically, we apply cross-validation to determinate parameter C. By developing a path following algorithm in the spirit of lars, we are able to choose C efficiently. 
+
 ### 17.3.9 Kernel ridge regression 
+
+The kernel ridge regression as follows:
+$$
+  f(x; w) = k^T(\boldsymbol K+\lambda \boldsymbol I_N)^{-1}y
+$$
+where $ k= [\mathcal K(x,x_1), \dots, \mathcal K(x,x_N)] $
+
 ### 17.3.10 SVMs for regression  
+
+The support vector machine regression is described below:
+$$
+  f(x) = \hat{w}_0 + \sum_{n:\alpha >0} \alpha_n \mathcal K(x_n,x)
+$$
  
 ## 3 ISLR Section 9.6 Lab Report
 In this lab, we demonstrate the support vector classifier and the support vector machine (SVM).
@@ -998,6 +1096,7 @@ library(ranger)
 library(baguette)
 library(xgboost)
 library(mltools)
+library(ggplot2)
 ```
 
 
@@ -1034,13 +1133,48 @@ for (var in colnames(alz)) {
 print(factoredVars)
 ```
 
-
 ```{r}
 # Data cleaning (mainly just converting ints to factors)
 alz <- alz %>% 
   select(-id) %>% 
   mutate_at(factoredVars, factor)
 ```
+
+
+
+```{r}
+### Some basic data exploration on a few predictors
+
+#### Distribution of diagnosis
+ggplot(data = alz, mapping = aes(x = diagnosis)) +
+  geom_bar()
+
+alz %>% group_by(diagnosis) %>% summarise(prop = n() / nrow(alz))
+```
+
+
+A normal (0) diagnosis is slightly more skewed in terms of frequency of occurrence then the other two diagnosis types. 
+
+```{r}
+# Effect of age on diagnosis
+ggplot(data = alz, mapping = aes(x = age, y = diagnosis)) +
+  geom_boxplot()
+
+alz %>% group_by(diagnosis) %>% summarise(mean_age = mean(age), med_age = median(age), sd_age = sd(age))
+```
+
+
+Seems a diagnosis of normal (0) with regards to age is slightly skewed towards being younger which makes since alzhemiers is a progressive degenerative disease. This is probably a significant predictor.
+
+
+```{r}
+# Effect of mealprep on diagnosis
+ggplot(data = alz, mapping = aes(x = diagnosis, color = mealprep, fill = mealprep)) +
+  geom_bar()
+```
+
+
+Mealprep of 0 (normal meal prep without assistance) is heavily skewed towards a diagnosis of normal (0) and the frequency of progressively worse meal prep scores increases as the diagnosis worsens implying mealprep may be a significant predictor.
 
 
 ```{r}
@@ -1057,6 +1191,8 @@ test_df <- testing(split)
 # Random Forest
 
 # The reason for not tuning trees is because it takes too long
+
+# Define the specification for classification for random forest for tidymodels where mtry and min_n will be tuned
 spec <- rand_forest(
   mtry = tune(),
   trees = 500,
@@ -1064,30 +1200,35 @@ spec <- rand_forest(
   set_mode("classification") %>%
   set_engine("ranger")
 
+# Define a recipe for tidymodels
 recipe <- recipe(diagnosis ~ ., data = train_df)
 
+# Define the workflow for tidymodels
 wf <- workflow() %>%
   add_recipe(recipe) %>% 
   add_model(spec)
 
+# Define the folds for cross validated tuning
 folds <- vfold_cv(train_df, v = 10)
 ```
 
 ```{r}
+# Register parallel computation
 registerDoParallel()
 
+# Tune the model using the folds
 tune_res <- tune_grid(
   wf,
   resamples = folds,
   grid = 10
 )
-
-tune_res
 ```
 
 ```{r}
+# Select the best model configuration based on roc area under curve
 best_auc <- select_best(tune_res, "roc_auc")
 
+# Finalize the best model using the best hyperparameters
 final_rf <- finalize_model(
   spec,
   best_auc
@@ -1098,13 +1239,16 @@ final_rf
 
 ```{r}
 set.seed(123)
+# Finalize the workflow
 final_wf <- workflow() %>%
   add_recipe(recipe) %>%
   add_model(final_rf)
 
+# Finalize the fit
 final_res <- final_wf %>%
   last_fit(split)
 
+# Output accuracy and roc_auc
 final_res %>%
   collect_metrics()
 ```
@@ -1114,6 +1258,8 @@ final_res %>%
 
 ```{r}
 # Bagging
+
+# Define the specification for classification for bagging for tidymodels where min_n, tree_depth and cost complexity will be tuned
 spec_bagging <- bag_tree(
   mode = "classification",
   cost_complexity = tune(),
@@ -1121,27 +1267,30 @@ spec_bagging <- bag_tree(
   min_n = tune()) %>% 
   set_engine("rpart")
 
+# Add the recipe from above and the bagging specification
 wf_bagging <- workflow() %>%
   add_recipe(recipe) %>% 
   add_model(spec_bagging)
 ```
 
 ```{r}
+# Enable parrallel compute
 registerDoParallel()
 
+# Tune the hyperparameters for the bagging model
 tune_res_bagging <- tune_grid(
   wf_bagging,
   resamples = folds,
   grid = 10
 )
-
-tune_res_bagging
 ```
 
 
 ```{r}
+# Select the best bagging model based on roc area under curve
 best_auc_bagging <- select_best(tune_res_bagging, "roc_auc")
 
+# Finalize the model based on the best hyperparameters
 final_bag <- finalize_model(
   spec_bagging,
   best_auc_bagging
@@ -1152,13 +1301,16 @@ final_bag
 
 ```{r}
 set.seed(123)
+# Finalize the workflow
 final_wf_bag <- workflow() %>%
   add_recipe(recipe) %>%
   add_model(final_bag)
 
+# Finalize the fit
 final_res_bag <- final_wf_bag %>%
   last_fit(split)
 
+# Output accuracy and roc_auc 
 final_res_bag %>%
   collect_metrics()
 ```
@@ -1171,6 +1323,8 @@ final_res_bag %>%
 # Boosting
 
 # The reason for not tuning trees is because it takes too long
+
+# Define the specification for classification for boosting for tidymodels where mtry and min_n will be tuned
 spec_boosting <- boost_tree(
   mode = "classification",
   mtry = tune(),
@@ -1187,6 +1341,7 @@ split <- initial_split(onehot_alz)
 train_df <- training(split)
 test_df <- testing(split)
 
+# Redefine folds, recipe and workflow
 folds <- vfold_cv(train_df, v = 10)
 
 recipe_boost <- recipe(diagnosis ~ ., data = train_df) 
@@ -1197,20 +1352,22 @@ wf_boosting <- workflow() %>%
 ```
 
 ```{r}
+# Enable parallel compute
 registerDoParallel()
 
+# Tune the boosting model
 tune_res_boosting <- tune_grid(
   wf_boosting,
   resamples = folds,
   grid = 10
 )
-
-tune_res_boosting
 ```
 
 ```{r}
+# Select the best boosting hyperparameters based on roc area under curve
 best_auc_boosting <- select_best(tune_res_boosting, "roc_auc")
 
+# Finalaize the model
 final_boost <- finalize_model(
   spec_boosting,
   best_auc_boosting
@@ -1221,13 +1378,16 @@ final_boost
 
 ```{r}
 set.seed(123)
+# Finalaize the workflow
 final_wf_boost <- workflow() %>%
   add_recipe(recipe_boost) %>%
   add_model(final_boost)
 
+# FInalaize the fit
 final_res_boost <- final_wf_boost %>%
   last_fit(split)
 
+# Output accuracy and roc_auc
 final_res_boost %>%
   collect_metrics()
 ```
@@ -1235,7 +1395,7 @@ final_res_boost %>%
 **The tuned boosting model produces test misclassification rate of 0.157037**
 
 
-**Comparing the three models: Random forest, bagging and boosting had misclassification rate of 0.1540741, 0.1688889, and 0.157037 respectively. Therefore, the Random Forest was the best model when comparing misclassification rate.**
+**Comparing the three models: Random forest, bagging and boosting had misclassification rate of 0.1540741, 0.1688889, and 0.157037 respectively. Therefore, the Random Forest was the best model when comparing misclassification rate which means about 15.4% of predictions made were incorrect on the test set.**
 
 
 

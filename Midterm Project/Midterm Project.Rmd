@@ -293,7 +293,7 @@ $$
   f(x) = \hat{w}_0 + \sum_{n:\alpha >0} \alpha_n \mathcal K(x_n,x)
 $$
  
-## 3 ISLR Section 9.6 Lab Repo
+## 3 ISLR Section 9.6 Lab Report
 In this lab, we demonstrate the support vector classifier and the support vector machine (SVM).
 
 ### 9.6.1 Support Vector Classifier
@@ -313,7 +313,7 @@ library(e1071)
 svmfit <- svm(y ~ ., data = dat, kernel = "linear", cost = 10, scale = FALSE)
 ```
 
-Although we chose not to scale the data here, we may choose to do some in some contexts.  Let's plot the support vector classifier.
+Although we chose not to scale the data here, we may choose to do so in some contexts.  Let's plot the support vector classifier.
 ```{r}
 plot(svmfit, dat)
 ```
@@ -386,7 +386,7 @@ summary(svmfit)
 plot(svmfit, dat)
 ```
 
-The support vector classifier made no errors on the training data, and the minimum number of support vectors (3) was used.  Since we see there are non-support vectors (graphed as circles) near the decision boundary, we know the margin was quite narrow.  Because of this, we can expect the model to perform poorly on test data.  Let's make one more model, this time with a smaller value than cost.
+The support vector classifier made no errors on the training data, and the minimum number of support vectors (3) was used.  Since we see there are non-support vectors (graphed as circles) near the decision boundary, we know the margin was quite narrow.  Because of this, we can expect the model to perform less well on test data.  Let's make one more model, this time with a smaller value than cost.
 
 ```{r}
 svmfit <- svm(y ~ ., data = dat, kernel = "linear", cost = 1)
@@ -537,7 +537,7 @@ out <- svm(y ~ ., data = dat, kernel = "linear", cost = 10)
 summary(out)
 table(out$fitted, dat$y)
 ```
-Wow!  Not a single training error.  Since there are so many variables relative to training observations, it can be easy to find hyperplans which fully separate the classes.  However, as always, we are more concerned about the support vector classifier's performance on test observations.  Let's see how it fares.
+Wow!  Not a single training error.  Since there are so many variables relative to training observations, it can be easy to find hyperplanes which fully separate the classes.  However, as always, we are more concerned about the support vector classifier's performance on test observations.  Let's see how it fares.
 ```{r}
 dat.te <- data.frame(
   x = Khan$xtest,
@@ -551,7 +551,246 @@ Our support vector classifier yielded two errors on the test data, both of which
 ### Reflection
 Support vector machines (SVMs) are useful classification models because their varying degrees of flexibility through the use of kernels.  The lessons we learned from the regression setting generally apply to the SVM setting.  For example, we should being wary of overfitting, staying conscious of the bias-variance trade-off in choosing a value of the "cost" of margin violations.  The e1071 library provides intuitive tools for leveraging SVMs, including built-in kernels and cross-validation. 
 
-## 4 ISLR Problem 9.6
+## 4 ISLR Exercise 9.6
+In this exercise, we explore the test performance of a support vector classifier using a range of "cost" values.  "Cost" represents the penalty for margin violations on the training set.  We are interested to see if support vector classifiers with a large value of cost (which does not misclassify any training observations) will actually perform worse on test data than a support vector classifier with a small value of cost (which misclassifies a few training observations).
+
+a.) First, we generate a data set that is "just barely linearly separable" with a 2-dimensional hyperplane (a line).  We plot the observations with color coding matching classification for visibility. We also plot a line separating the two classifications as a visual demonstration of separability.
+```{r}
+#Generate a random data set with normalized x1 and x2 values
+s <- 17
+set.seed(s)
+n <- 60
+xtrain <- matrix(data = rnorm(n * 2), ncol = 2)
+
+#Assign observations to one of two classifications
+ytrain <- c(rep(-1, n/2), rep(1, n/2))
+
+#Displace the observations of one class relative to the other
+x1shift = 2.5
+x2shift = 2.5
+xtrain[1:n/2, 1] <- xtrain[1:n/2, 1] + x1shift
+xtrain[1:n/2, 2] <- xtrain[1:n/2, 2] + x2shift
+
+#Plot the observations colored by classification.
+plot(xtrain, col = ytrain + 10)
+
+#Plot a boundary line showing the observations are barely linearly separable.
+abline(a=5.45, b=-2.4)
+```
+
+b.) Now we perform cross-validation on support vector classifiers with a range of cost values.  We will calculate error rates, count the number of misclassified training observations, and determine how the two are related.
+```{r}
+library(e1071)
+
+#Create data frame of features and responses
+traindata <- data.frame(x = xtrain, y = as.factor(ytrain))
+
+#Perform cross-validation on a range of cost values
+set.seed(s)
+crossvalidation <- tune(svm, y ~ ., data = traindata, kernel = "linear",
+                        ranges = list(cost = c(1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2, 
+                                               1e3)))
+
+#Inspect the cross-validation error rate for each value of cost
+#summary(crossvalidation)
+
+#Generate individual models for each cost value used in the cross-validation
+svm.cost0.001 <- svm(y ~ ., data = traindata, kernel = "linear", cost = 0.001)
+svm.cost0.01 <- svm(y ~ ., data = traindata, kernel = "linear", cost = 0.01)
+svm.cost0.1 <- svm(y ~ ., data = traindata, kernel = "linear", cost = 0.1)
+svm.cost1 <- svm(y ~ ., data = traindata, kernel = "linear", cost = 1)
+svm.cost10 <- svm(y ~ ., data = traindata, kernel = "linear", cost = 10)
+svm.cost100 <- svm(y ~ ., data = traindata, kernel = "linear", cost = 100)
+svm.cost1000 <- svm(y ~ ., data = traindata, kernel = "linear", cost = 1000)
+
+#Generate tables of predicted classifications versus actual classifications
+Table0.001 = table(Predictions_Cost_0.001 = predict(svm.cost0.001, traindata),
+      Actual = traindata$y)
+Table0.01 = table(Predictions_Cost_0.01 = predict(svm.cost0.01, traindata),
+      Actual = traindata$y)
+Table0.1 = table(Predictions_Cost_0.1 = predict(svm.cost0.1, traindata),
+      Actual = traindata$y)
+Table1 = table(Predictions_Cost_1 = predict(svm.cost1, traindata),
+      Actual = traindata$y)
+Table10 = table(Predictions_Cost_10 = predict(svm.cost10, traindata),
+      Actual = traindata$y)
+Table100 = table(Predictions_Cost_100 = predict(svm.cost100, traindata),
+      Actual = traindata$y)
+Table1000 = table(Predictions_Cost_1000 = predict(svm.cost1000, traindata),
+      Actual = traindata$y)
+
+#Count the number of training error misclassifications for each cost
+ErrorCount0.001 = Table0.001[2] + Table0.001[3]
+ErrorCount0.01 = Table0.01[2] + Table0.01[3]
+ErrorCount0.1 = Table0.1[2] + Table0.1[3]
+ErrorCount1 = Table1[2] + Table1[3]
+ErrorCount10 = Table10[2] + Table10[3]
+ErrorCount100 = Table100[2] + Table100[3]
+ErrorCount1000 = Table1000[2] + Table1000[3]
+
+#Calculate training misclassification error rates for each cost
+ErrorRate0.001 <- ErrorCount0.001 / n
+ErrorRate0.01 <- ErrorCount0.01 / n
+ErrorRate0.1 <- ErrorCount0.1 / n
+ErrorRate1 <- ErrorCount1 / n
+ErrorRate10 <- ErrorCount10 / n
+ErrorRate100 <- ErrorCount100 / n
+ErrorRate1000 <- ErrorCount1000 / n
+
+#Compare Training Error Count, Training Error Rate,
+#and Cross Validation error rate
+TrainError = c(Cost_0.001 = ErrorCount0.001,
+                          Cost_0.01 = ErrorCount0.01, Cost_0.1 = ErrorCount0.1,
+                          Cost_1 = ErrorCount1, Cost_10 = ErrorCount10,
+                          Cost_100 = ErrorCount100, Cost_1000 = ErrorCount1000)
+TrainErrorRate = c(ErrorRate0.001, ErrorRate0.01, ErrorRate0.1,
+                         ErrorRate1, ErrorRate10, ErrorRate100, ErrorRate1000)
+CrossValidation = crossvalidation$performance$error
+
+TrainingTable <- cbind(TrainError, TrainErrorRate, CrossValidation)
+TrainingTable
+```
+
+With the above table, we can compare the training misclassification errors with the cross-validation error rate across a range of cost values.  When the cost value is small, at 0.001, we have 5 training misclassifications, an error rate of 8%.  When cost is high, at 100 or 1000, the error rate falls to zero.  The cross-validation results, however, are not monotonic decreasing.  Generally, as training error misclassification rate falls, the cross-validation error rate first steeply falls and then modestly rises.  The cost value with the minimum cross-validation error is 0.1.
+
+c.) Now that we have examined the performance of our SVMs on training data, let's proceed to work with test data.  First, we will generate a test dataset in the same manner as our training dataset.  Then we will compute the test errors corresponding to each value of cost we considered previously.
+``` {r}
+#Generate test data in same fashion as training data
+set.seed(s+1)
+n <- 60
+xtest = matrix(rnorm(2*n), ncol = 2)
+ytest = c(rep(-1, n/2), rep(1, n/2))
+xtest[1:n/2, 1] <- xtest[1:n/2, 1] + x1shift
+xtest[1:n/2, 2] <- xtest[1:n/2, 2] + x2shift
+#plot(xtest, col = ytest + 11)
+testdata <- data.frame(x = xtest, y = as.factor(ytest))
+
+#Compute test errors corresponding to each value of cost considered
+TestTable0.001 = table(Predictions_Cost_0.001 = predict(svm.cost0.001,testdata),
+      Actual = testdata$y)
+TestTable0.01 = table(Predictions_Cost_0.01 = predict(svm.cost0.01, testdata),
+      Actual = testdata$y)
+TestTable0.1 = table(Predictions_Cost_0.1 = predict(svm.cost0.1, testdata),
+      Actual = testdata$y)
+TestTable1 = table(Predictions_Cost_1 = predict(svm.cost1, testdata),
+      Actual = testdata$y)
+TestTable10 = table(Predictions_Cost_10 = predict(svm.cost10, testdata),
+      Actual = testdata$y)
+TestTable100 = table(Predictions_Cost_100 = predict(svm.cost100, testdata),
+      Actual = testdata$y)
+TestTable1000 = table(Predictions_Cost_1000 = predict(svm.cost1000, testdata),
+      Actual = testdata$y)
+
+#Count the number of test error misclassifications for each cost
+TestErrorCount0.001 = TestTable0.001[2] + TestTable0.001[3]
+TestErrorCount0.01 = TestTable0.01[2] + TestTable0.01[3]
+TestErrorCount0.1 = TestTable0.1[2] + TestTable0.1[3]
+TestErrorCount1 = TestTable1[2] + TestTable1[3]
+TestErrorCount10 = TestTable10[2] + TestTable10[3]
+TestErrorCount100 = TestTable100[2] + TestTable100[3]
+TestErrorCount1000 = TestTable1000[2] + TestTable1000[3]
+
+#Calculate test misclassification error rates for each cost
+TestErrorRate0.001 <- TestErrorCount0.001 / n
+TestErrorRate0.01 <- TestErrorCount0.01 / n
+TestErrorRate0.1 <- TestErrorCount0.1 / n
+TestErrorRate1 <- TestErrorCount1 / n
+TestErrorRate10 <- TestErrorCount10 / n
+TestErrorRate100 <- TestErrorCount100 / n
+TestErrorRate1000 <- TestErrorCount1000 / n
+
+#Compare test error counts/rate again training error counts/rate
+#and cross-validation error rate
+TestTable <- cbind(TestError = c(TestErrorCount0.001,
+                                      TestErrorCount0.01,
+                                      TestErrorCount0.1, TestErrorCount1,
+                                      TestErrorCount10, TestErrorCount100,
+                                      TestErrorCount1000),
+                   TestErrorRate = c(TestErrorRate0.001, TestErrorRate0.01,
+                                     TestErrorRate0.1, TestErrorRate1,
+                                     TestErrorRate10, TestErrorRate100,
+                                     TestErrorRate1000))
+CombinedTable <- cbind(TestTable, TrainingTable)
+CombinedTable
+```
+The SVM with a cost value of 0.001 produced the fewest test classification errors at 3%.  This model was the most flexible of the seven we trained previously.  On the other hand, the SVMs with cost values of 100 and 1000 produced the most classification errors on our test data, a 13% test error rate.  Notably, these results are in contrast to the training error performance where the relationship between cost and classification error rate was reversed: higher costs had yielded lower training error rates.
+
+We plot the SVM with cost = 0.001 here.  Notice that every observation is a support vector.
+```{r}
+plot(svm.cost0.001, testdata)
+```
+
+The cross-validation error rate was exceptionally high at 60% for a cost value of 0.001, yet this cost value produced the lowest test error rate.  Our cross-validation suggested a cost-value of 0.1 was optimal, yet this value produced a modestly high test error rate.
+
+d.)  The dissonance between classification error rates on the training data and test data highlights the dangers of strictly fitting data which is just barely linearly separable.  When a separating hyperplane depends on just a few observations, the support vector classifier is subject to high variance and overfitting.  Both the test error rate and cross-validation rates for high cost values support this.  
+
+Interestingly, the test error rate and cross-validation error rate do not support the same cost values, though they both provide evidence that a high cost model is not best.  Cross-validation supports a moderate cost of 0.1 while the test error rate supports a very low cost of 0.001.  As mentioned before, the cross-validation had a very high error rate of over 50% for the 0.001 cost model.  What could be happening here?
+
+We believe part of the discrepancy is due to the relatively small sample sizes (n=60) used in the training and test data.  Creating randomly generated data sets that were "just barely linearly separable" with large sample sizes tended to require the center of each classification of observations to be significantly displaced, by 4 or more standard deviations.  This yielded SVMs whose accuracy were less prone to changes in the hyperplane slope, yielding more homogeneous results for varying degrees of cost.  We can now leverage the law of large numbers by creating a very large test data set to get a better sense of the average power at each cost value.  Let us try a test sample size of n=10000.
+
+``` {r, echo=FALSE}
+#Generate test data in same fashion as training data
+set.seed(s+1)
+n <- 10000
+xtest = matrix(rnorm(2*n), ncol = 2)
+ytest = c(rep(-1, n/2), rep(1, n/2))
+xtest[1:n/2, 1] <- xtest[1:n/2, 1] + x1shift
+xtest[1:n/2, 2] <- xtest[1:n/2, 2] + x2shift
+#plot(xtest, col = ytest + 11)
+testdata <- data.frame(x = xtest, y = as.factor(ytest))
+
+#Compute test errors corresponding to each value of cost considered
+TestTable0.001 = table(Predictions_Cost_0.001 = predict(svm.cost0.001,testdata),
+      Actual = testdata$y)
+TestTable0.01 = table(Predictions_Cost_0.01 = predict(svm.cost0.01, testdata),
+      Actual = testdata$y)
+TestTable0.1 = table(Predictions_Cost_0.1 = predict(svm.cost0.1, testdata),
+      Actual = testdata$y)
+TestTable1 = table(Predictions_Cost_1 = predict(svm.cost1, testdata),
+      Actual = testdata$y)
+TestTable10 = table(Predictions_Cost_10 = predict(svm.cost10, testdata),
+      Actual = testdata$y)
+TestTable100 = table(Predictions_Cost_100 = predict(svm.cost100, testdata),
+      Actual = testdata$y)
+TestTable1000 = table(Predictions_Cost_1000 = predict(svm.cost1000, testdata),
+      Actual = testdata$y)
+
+#Count the number of test error misclassifications for each cost
+TestErrorCount0.001 = TestTable0.001[2] + TestTable0.001[3]
+TestErrorCount0.01 = TestTable0.01[2] + TestTable0.01[3]
+TestErrorCount0.1 = TestTable0.1[2] + TestTable0.1[3]
+TestErrorCount1 = TestTable1[2] + TestTable1[3]
+TestErrorCount10 = TestTable10[2] + TestTable10[3]
+TestErrorCount100 = TestTable100[2] + TestTable100[3]
+TestErrorCount1000 = TestTable1000[2] + TestTable1000[3]
+
+#Calculate test misclassification error rates for each cost
+TestErrorRate0.001 <- TestErrorCount0.001 / n
+TestErrorRate0.01 <- TestErrorCount0.01 / n
+TestErrorRate0.1 <- TestErrorCount0.1 / n
+TestErrorRate1 <- TestErrorCount1 / n
+TestErrorRate10 <- TestErrorCount10 / n
+TestErrorRate100 <- TestErrorCount100 / n
+TestErrorRate1000 <- TestErrorCount1000 / n
+
+#Compare test error counts/rate again training error counts/rate
+#and cross-validation error rate
+TestTable <- cbind(TestError = c(TestErrorCount0.001,
+                                      TestErrorCount0.01,
+                                      TestErrorCount0.1, TestErrorCount1,
+                                      TestErrorCount10, TestErrorCount100,
+                                      TestErrorCount1000),
+                   TestErrorRate = c(TestErrorRate0.001, TestErrorRate0.01,
+                                     TestErrorRate0.1, TestErrorRate1,
+                                     TestErrorRate10, TestErrorRate100,
+                                     TestErrorRate1000))
+CombinedTable <- cbind(TestTable, TrainingTable)
+CombinedTable
+```
+
+On a much larger test data set, we see that SVMs with cost values of 0.1 and 0.01 perform better the 0.001 cost.  This outcome is closer to what we would have expected based on our cross-validation which favored a 0.1 cost value.  Earlier, the cross-validation results did not correspond as nicely with the test error rate from the smaller test data set.  It seems random chance was playing a significant role in measuring the accuracy of the models on small data sets.  
+
+Cross-validation is great tool for informing our choice of model parameters.  When paired with other decision-making tools, we can generate a model that best meets our needs without falling into common traps such as overfitting training data.  We should be especially be careful in edge cases, such as when data are just barely linearly separable, as we can be misled by performance on these precarious training data.
 
 ## 5 Murphy Chapter 18 Summary
 
@@ -567,6 +806,7 @@ library(ranger)
 library(baguette)
 library(xgboost)
 library(mltools)
+library(ggplot2)
 ```
 
 
@@ -603,13 +843,48 @@ for (var in colnames(alz)) {
 print(factoredVars)
 ```
 
-
 ```{r}
 # Data cleaning (mainly just converting ints to factors)
 alz <- alz %>% 
   select(-id) %>% 
   mutate_at(factoredVars, factor)
 ```
+
+
+
+```{r}
+### Some basic data exploration on a few predictors
+
+#### Distribution of diagnosis
+ggplot(data = alz, mapping = aes(x = diagnosis)) +
+  geom_bar()
+
+alz %>% group_by(diagnosis) %>% summarise(prop = n() / nrow(alz))
+```
+
+
+A normal (0) diagnosis is slightly more skewed in terms of frequency of occurrence then the other two diagnosis types. 
+
+```{r}
+# Effect of age on diagnosis
+ggplot(data = alz, mapping = aes(x = age, y = diagnosis)) +
+  geom_boxplot()
+
+alz %>% group_by(diagnosis) %>% summarise(mean_age = mean(age), med_age = median(age), sd_age = sd(age))
+```
+
+
+Seems a diagnosis of normal (0) with regards to age is slightly skewed towards being younger which makes since alzhemiers is a progressive degenerative disease. This is probably a significant predictor.
+
+
+```{r}
+# Effect of mealprep on diagnosis
+ggplot(data = alz, mapping = aes(x = diagnosis, color = mealprep, fill = mealprep)) +
+  geom_bar()
+```
+
+
+Mealprep of 0 (normal meal prep without assistance) is heavily skewed towards a diagnosis of normal (0) and the frequency of progressively worse meal prep scores increases as the diagnosis worsens implying mealprep may be a significant predictor.
 
 
 ```{r}
@@ -626,6 +901,8 @@ test_df <- testing(split)
 # Random Forest
 
 # The reason for not tuning trees is because it takes too long
+
+# Define the specification for classification for random forest for tidymodels where mtry and min_n will be tuned
 spec <- rand_forest(
   mtry = tune(),
   trees = 500,
@@ -633,30 +910,35 @@ spec <- rand_forest(
   set_mode("classification") %>%
   set_engine("ranger")
 
+# Define a recipe for tidymodels
 recipe <- recipe(diagnosis ~ ., data = train_df)
 
+# Define the workflow for tidymodels
 wf <- workflow() %>%
   add_recipe(recipe) %>% 
   add_model(spec)
 
+# Define the folds for cross validated tuning
 folds <- vfold_cv(train_df, v = 10)
 ```
 
 ```{r}
+# Register parallel computation
 registerDoParallel()
 
+# Tune the model using the folds
 tune_res <- tune_grid(
   wf,
   resamples = folds,
   grid = 10
 )
-
-tune_res
 ```
 
 ```{r}
+# Select the best model configuration based on roc area under curve
 best_auc <- select_best(tune_res, "roc_auc")
 
+# Finalize the best model using the best hyperparameters
 final_rf <- finalize_model(
   spec,
   best_auc
@@ -667,13 +949,16 @@ final_rf
 
 ```{r}
 set.seed(123)
+# Finalize the workflow
 final_wf <- workflow() %>%
   add_recipe(recipe) %>%
   add_model(final_rf)
 
+# Finalize the fit
 final_res <- final_wf %>%
   last_fit(split)
 
+# Output accuracy and roc_auc
 final_res %>%
   collect_metrics()
 ```
@@ -683,6 +968,8 @@ final_res %>%
 
 ```{r}
 # Bagging
+
+# Define the specification for classification for bagging for tidymodels where min_n, tree_depth and cost complexity will be tuned
 spec_bagging <- bag_tree(
   mode = "classification",
   cost_complexity = tune(),
@@ -690,27 +977,30 @@ spec_bagging <- bag_tree(
   min_n = tune()) %>% 
   set_engine("rpart")
 
+# Add the recipe from above and the bagging specification
 wf_bagging <- workflow() %>%
   add_recipe(recipe) %>% 
   add_model(spec_bagging)
 ```
 
 ```{r}
+# Enable parrallel compute
 registerDoParallel()
 
+# Tune the hyperparameters for the bagging model
 tune_res_bagging <- tune_grid(
   wf_bagging,
   resamples = folds,
   grid = 10
 )
-
-tune_res_bagging
 ```
 
 
 ```{r}
+# Select the best bagging model based on roc area under curve
 best_auc_bagging <- select_best(tune_res_bagging, "roc_auc")
 
+# Finalize the model based on the best hyperparameters
 final_bag <- finalize_model(
   spec_bagging,
   best_auc_bagging
@@ -721,13 +1011,16 @@ final_bag
 
 ```{r}
 set.seed(123)
+# Finalize the workflow
 final_wf_bag <- workflow() %>%
   add_recipe(recipe) %>%
   add_model(final_bag)
 
+# Finalize the fit
 final_res_bag <- final_wf_bag %>%
   last_fit(split)
 
+# Output accuracy and roc_auc 
 final_res_bag %>%
   collect_metrics()
 ```
@@ -740,6 +1033,8 @@ final_res_bag %>%
 # Boosting
 
 # The reason for not tuning trees is because it takes too long
+
+# Define the specification for classification for boosting for tidymodels where mtry and min_n will be tuned
 spec_boosting <- boost_tree(
   mode = "classification",
   mtry = tune(),
@@ -756,6 +1051,7 @@ split <- initial_split(onehot_alz)
 train_df <- training(split)
 test_df <- testing(split)
 
+# Redefine folds, recipe and workflow
 folds <- vfold_cv(train_df, v = 10)
 
 recipe_boost <- recipe(diagnosis ~ ., data = train_df) 
@@ -766,20 +1062,22 @@ wf_boosting <- workflow() %>%
 ```
 
 ```{r}
+# Enable parallel compute
 registerDoParallel()
 
+# Tune the boosting model
 tune_res_boosting <- tune_grid(
   wf_boosting,
   resamples = folds,
   grid = 10
 )
-
-tune_res_boosting
 ```
 
 ```{r}
+# Select the best boosting hyperparameters based on roc area under curve
 best_auc_boosting <- select_best(tune_res_boosting, "roc_auc")
 
+# Finalaize the model
 final_boost <- finalize_model(
   spec_boosting,
   best_auc_boosting
@@ -790,13 +1088,16 @@ final_boost
 
 ```{r}
 set.seed(123)
+# Finalaize the workflow
 final_wf_boost <- workflow() %>%
   add_recipe(recipe_boost) %>%
   add_model(final_boost)
 
+# FInalaize the fit
 final_res_boost <- final_wf_boost %>%
   last_fit(split)
 
+# Output accuracy and roc_auc
 final_res_boost %>%
   collect_metrics()
 ```
@@ -804,7 +1105,7 @@ final_res_boost %>%
 **The tuned boosting model produces test misclassification rate of 0.157037**
 
 
-**Comparing the three models: Random forest, bagging and boosting had misclassification rate of 0.1540741, 0.1688889, and 0.157037 respectively. Therefore, the Random Forest was the best model when comparing misclassification rate.**
+**Comparing the three models: Random forest, bagging and boosting had misclassification rate of 0.1540741, 0.1688889, and 0.157037 respectively. Therefore, the Random Forest was the best model when comparing misclassification rate which means about 15.4% of predictions made were incorrect on the test set.**
 
 
 

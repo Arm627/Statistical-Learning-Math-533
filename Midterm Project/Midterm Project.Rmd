@@ -695,6 +695,297 @@ Cross-validation is great tool for informing our choice of model parameters.  Wh
 
 ## 5 Murphy Chapter 18 Summary
 
+### 18.1 Classification and Regression Trees
+
+Classification and regression trees recursively partition the input space and define a local model in each resulting region of input space. This can be represented by a tree with a leaf per input region.
+
+### 18.1.1 Model Definition
+
+A regression tree consists of a set of nested decision rules. At each node $i$, the feature dimension $d_i$ of the input vector $\boldsymbol{x}$ is compared to a threshold value $t_i$, after which the input flows down the left or right branch, depending on its comparison to the threshold. The predicted output for an input in that recursively segmented section of the input space is given at the leaves of the tree. 
+
+Formally, a regression tree is defined by
+$$
+f(\boldsymbol{x};\boldsymbol{\theta}) = \sum_{j=1}^Jw_j\mathbb{I}(\boldsymbol{x}\in R_j),
+$$
+where $R_j$ is the region specified by the $j$'th leaf node, $w_j$ is the predicted output for that node, and $\boldsymbol\theta=\{(R_j,w_j) : j= 1:J\}$, where $J$ is the number of nodes. The regions are defined by the feature dimensions and corresponding thresholds at each split in the tree. 
+
+For classification problems, the leaves contain a distribution over the class labels, as opposed to the mean response. 
+
+### 18.1.2 Model Fitting
+
+To fit the model, we minimize 
+$$
+\mathcal{L}(\boldsymbol{\theta}) = \sum_{n=1}^N \ell(y_n, f(\boldsymbol{x}_n;\boldsymbol\theta)) = \sum_{j=1}^J\sum_{\boldsymbol{x}_n\in R_j}\ell(y_n,w_j).
+$$
+
+The standard way to find the optimal partitioning of the data is to use a greedy procedure, iteratively growing the tree one node at a time. 
+
+Suppose we are at node $i$, let $\mathcal{D}_i = \{(\boldsymbol{x}_n,y_n)\in N_i\}$ be the set of examples that reach this node. If the $j$'th feature is a real-valued scalar, we partition the data at node $i$ by comparing to a threshold $t$. The set of possible thresholds $\mathcal{T}_j$ for feature $j$ can be obtained by sorting the unique values of $\{x_{nj}\}$. For each possible threshold, the left and right splits are defined by $\mathcal{D}^L_i(j,t) = \{(\boldsymbol{x}_n,y_n)\in N_i: x_{n,j}\leq t\}$ and $\mathcal{D}^R_i(j,t) = \{(\boldsymbol{x}_n,y_n)\in N_i: x_{n,j} > t\}$, respectively. 
+
+If the $j$'th feature is categorical with $K_j$ possible values, the tree checks whether the feature is equal to each of those values, which defines a set of $K_j$ possible binary splits: $\mathcal{D}_i^L(j,t) = \{(\boldsymbol{x}_n,y_n)\in N_i : x_{n,j} = t\}$ and $\mathcal{D}_i^R(j,t) = \{(\boldsymbol{x}_n,y_n)\in N_i : x_{n,j} \neq t\}$. 
+
+After computing $\mathcal{D}_i^L(j,t)$ and $\mathcal{D}_i^R(j,t)$ for each $j$ and $t$ at node $i$, the best feature $j_i$ and the best value for that feature $t_i$ are chosen as follows:
+
+$$
+(j_i,t_i) = \arg\min_{j\in\{1,\dots,D\}}\min_{t\in\mathcal{T}_j}\frac{|\mathcal{D}_i^L(j,t)|}{|\mathcal{D}_i|}c(\mathcal{D}_i^L(j,t)) + \frac{|\mathcal{D}_i^R(j,t)|}{|\mathcal{D}_i|}c(\mathcal{D}_i^R(j,t)),
+$$
+where $c$ can be the mean squared error
+$$
+\frac{1}{|\mathcal{D}|}\sum_{n\in\mathcal{D}_i}(y_n-\bar{y})^2
+$$
+for regression. For classification, we first compute the empirical distribution over class labels for node $i$:
+$$
+\hat{\pi}_{ic} = \frac{1}{|\mathcal{D}_i|}\sum_{n\in\mathcal{D}_i}\mathbb{I}(y_n=c),
+$$
+and use this to compute the Gini index
+$$
+G_i = \sum_{c=1}^C\hat{\pi}_{ic}(1-\hat{\pi}_{ic}) = 1 -\sum_{c}\hat{\pi}_{ic}^2,
+$$
+which gives the expected error rate. Note that $\hat{\pi}_{ic}$ is the probability of a random entry in the leaf belonging to class $c$, and $1-\hat\pi _{ic}$ is the probability it would be misclassified.
+
+We could also define the function $c$ as the entropy or deviance of the node:
+$$
+H_i = -\sum_{c=1}^C\hat\pi_{ic}\log\hat\pi_{ic}.
+$$
+The above equation for $(j_i,t_i)$ can then be used to find the best feature and threshold at each node. The data is then partitioned, and the fitting algorithm is called recursively on each subset of the data.
+
+### 18.1.3 Regularization
+
+If the tree becomes deep enough, the error rate on the training set tends to 0 by partitioning the input space into small enough regions, which leads to overfitting. There are two main approaches to prevent this: stop the tree growing process according to some heuristic (e.g. reaching some maximum depth), or grow the tree to its maximum depth and pruning it back by merging split subtrees back into their parent. 
+
+### 18.1.4 Handling Missing Input Features
+
+The standard heuristic is to look for a series of ``backup" variables, which can induce a similar partition to the chosen variable at any given split. These are called surrogate splits. 
+
+A simpler approach for categorical variables is to code ``missing" as a new value and treat the data as fully observed.
+
+### 18.1.5 Pros and Cons
+
+Trees are easy to interpret, can easily handle mixed discrete and continuous inputs, can perform automatic variable selection, are relatively robust to outliers, are fast to fit and scale well, can handle missing input features, and there's no need to standardize data. 
+
+However, they do not predict accurately compared to other models and they are unstable (i.e. small changes to the input can have large implications later in the tree).
+
+### 18.2 Ensemble Learning
+
+A simple way to reduce the variance of high variance estimators is to average multiple models. This is ensemble learning. This sort of model has the form
+$$
+f(y|\boldsymbol{x}) = \frac{1}{|\mathcal{M}|}\sum_{m\in\mathcal{M}} f_m(y|\boldsymbol{x}),
+$$
+where $f_m$ is the $m$'th base model. The ensemble will have similar bias to the base models but lower variance. 
+For regression models, averaging is a good way to combine predictions, and for classifiers is is sometimes better to take a majority vote of the outputs. 
+
+### 18.2.1 Stacking
+
+Alternatively, we can learn to combine the base models by using
+$$
+f(y|\boldsymbol{x}) = \sum_{m\in\mathcal{M}}w_mf_m(y|\boldsymbol{x}),
+$$
+which is called stacking or stacked generalization. The combination weights used by the stacking method need to be trained on a separate dataset, otherwise they put all their mass on the best performing base model.
+
+### 18.2.2 Ensembling is not Bayes Model Averaging
+
+An ensemble considers a larger hypothesis class of the form
+$$
+p(y|\boldsymbol{x},\boldsymbol{w},\boldsymbol{\theta}) = \sum_{m\in\mathcal{M}} w_mp(y|\boldsymbol{x},\boldsymbol{\theta}_m),
+$$
+whereas Bayes Model Averaging uses
+$$
+p(y|\boldsymbol{x},\mathcal{D}) = \sum_{m\in\mathcal{M}}p(m|\mathcal{D})p(y|\boldsymbol{x},m,\mathcal{D}).
+$$
+The difference is that the weights $p(m|\mathcal{D})$ sum to one and with infinite data, only a single model is chosen (namely the MAP model). However, the ensemble weights $w_m$ are arbitrary and don't collapse to a single model. 
+
+### 18.3 Bagging
+
+Bagging stands for ``bootstrap aggregating", a form of ensemble learning in which $M$ different base models are fit to differently randomly sampled (with replacement) versions of the data. 
+
+The disadvantage of bootstrap is that each base model only sees 63% of the unique input examples on average. The 37% of the training instances that are not used by a given base model are called out-of-bag instances. The oob instances can be used in prediction as an estimate of test set performance, which is a useful alternative to cross validation. 
+
+The main advantage of bootstrap is that it prevents the ensemble from relying too much on any individual training example. This generally increases with the size of the ensemble. 
+
+Bagging doesn't always improve performance as it relies on the base models being unstable estimators, which is the case for decision trees, but might not be true for other models. 
+
+### 18.4 Random Forests
+
+The technique of random forests tries to decorrelate the base learners by learning trees based on a randomly chosen subset of input variables, as well as a randomly chosen subset of data cases. 
+
+### 18.5 Boosting
+
+Consider the model of an ensemble of trees
+$$
+f(\boldsymbol{x};\boldsymbol{\theta}) = \sum_{m=1}^M\beta_mF_m(\boldsymbol{x};\boldsymbol{\theta}_m)
+$$
+where $F_m$ is the $m$'th tree and $\beta_m$ is the corresponding weight. Usually, $\beta_m = 1/M$, but this can be generalized by allowing the $F_m$ functions to be general function approximators, such as neural networks. This is called an additive model, and can be thought of as a linear model with adaptive basis functions. As usual, we want to minimize the empirical loss
+$$
+\mathcal{L}(f) = \sum_{i=1}^N\ell(y_i,f(\boldsymbol{x}_i)).
+$$
+Boosting is an algorithm for sequentially fitting additive models where each $F_m$ is a binary classifier that returns $F_m\in\{-1,+1\}$. In particular, after fitting $F_1$ on the original data, the data samples are weighted by the errors made by $F_1$, so that misclassified examples get more weight. Then $F_2$ is fit on to this weighted set, and repeat until the desired number $M$ of components are fit. 
+
+As long as each $F_m$ has an accuracy that's better than chance, the final ensemble of classifiers will have higher accuracy than any given component. 
+
+Boosting reduces bias by fitting trees that depend on each other, while bagging and random forests reduce variance by fitting independent trees. 
+
+### 18.5.1 Forward Stagewise Additive Modeling
+
+In forward stagewise additive modeling, we sequentially optimize the empirical loss for general, differential loss functions where $f$ is an additive model. That is, at iteration $m$, we compute
+$$
+(\beta_m, \boldsymbol{\theta}_m) = \arg\min_{\beta,\boldsymbol{\theta}}\sum_{i=1}^N\ell(y_i,f_{m-1}(\boldsymbol{x}_i)+\beta F(\boldsymbol{x}_i;\boldsymbol\theta)),
+$$
+and set
+$$
+f_m(\boldsymbol x) = f_{m-1}(\boldsymbol x) + \beta_m F(\boldsymbol x; \boldsymbol\theta_m) = f_{m-1}(\boldsymbol x) + \beta_m F_m(\boldsymbol x).
+$$
+How to perform this optimization depends on the loss function we choose. 
+
+### 18.5.2 Quadratic Loss and Least Squares Boosting
+
+Suppose we use squared error loss $\ell(y,\hat y) = (y-\hat y)^2$. Then the $i$'th term at step $m$ becomes
+$$
+\ell(y_i,f_{m-1}(\boldsymbol x_i) + \beta F(\boldsymbol x_i;\boldsymbol\theta)) = (y_i - f_{m-1}(\boldsymbol x_i)-\beta F(\boldsymbol x_i;\boldsymbol\theta))^2 = (r_{im}-\beta F(\boldsymbol x_i ; \boldsymbol\theta))^2,
+$$
+where $r_{im} = y_i - f_{m-1}(\boldsymbol x_i)$ is the residual of the current model on the $i$'th observation. This can be minimized by simply setting $\beta = 1$ and fitting $F$ to the residual errors. This is least squares boosting.
+
+### 18.5.3 Exponential Loss and AdaBoost
+
+Suppose we are interested in binary classification, i.e. predicting $\tilde{y}_i\in\{-1,+1\}$. Assume the weak learner computes
+$$
+p(y=1|\boldsymbol x) = \frac{e^{F(\boldsymbol x)}}{e^{-F(\boldsymbol x)}+e^{F(\boldsymbol x)}} = \frac{1}{1+e^{-2F(\boldsymbol x)}}
+$$
+The negative log likelihood is given by
+$$
+\ell(\tilde{y},F(\boldsymbol x)) = \log(1+e^{-2\tilde{y}F(\boldsymbol x)}),
+$$
+which can be minimized by ensuring that the margin $m(\boldsymbol x) = \tilde{y}F(\boldsymbol x)$ is as large as possible. The log loss penalizes negative margins more heavily than positive ones, which is desired since positive margins are already classified correctly.
+
+We could also consider the exponential loss
+$$
+\ell(\tilde{y},F(\boldsymbol x)) = \exp(-\tilde{y}F(\boldsymbol x)).
+$$
+With an infinite sample size, the optimal solution to the exponential loss is the same as for the log loss.
+
+It turns out that the exponential loss is easier to optimize in the boosting setting however. If the base classifier $F_m$ returns a binary class label. The resulting algorithm is called discrete AdaBoost. If $F_m$ returns a probability instead, a modified version, called real AdaBoost, can be used.
+
+At step $m$, we minimize
+$$
+L_m(F) = \sum_{i=1}^N \omega_{i,m}\exp(-\beta\tilde{y}_iF(\boldsymbol x_i)),
+$$
+where $\omega_{i,m} = \exp(-\tilde{y}_if_{m-1}(\boldsymbol x_i))$ is a weight applied to datacase $i$, and $\tilde{y}_i\in\{-1,+1\}$. Solving for the optimal function $F_m$ and the size of the update $\beta$, the overall update becomes
+$$
+f_m(\boldsymbol x) = f_{m-1}(\boldsymbol x) + \beta_m F_m(\boldsymbol x),
+$$
+where 
+$$
+F_m = \arg\min_F\sum_{i=1}^N\omega_{i,m}\mathbb{I}(\tilde{y}_i\neq F(\boldsymbol x_i)),
+$$
+$$
+\beta = \frac{1}{2}\log\frac{1-\text{err}_m}{\text{err}_m},
+$$
+and
+$$
+\text{err}_m = \frac{\sum_{i=1}^N\omega_{i,m}\mathbb{I}(\tilde{y}_i\neq F_m(\boldsymbol x_i))}{\sum_{i=1}^N\omega_{i,m}}.
+$$
+After updating the strong learner, the weights are computed for the next iteration as
+$$
+\omega_{i,m+1} = \begin{cases} \omega_{i,m}e^{\alpha_m} &\text{if } \tilde{y}_i\neq F_m(\boldsymbol x_i) \\ \omega_{i,m} & \text{otherwise}\end{cases},
+$$
+where $\alpha_m = 2\beta_m$. 
+
+SAMME stands for stagewise additive modeling using a multiclass exponential loss function is an adaboost-like algorithm to minimize a multiclass generalization of exponential loss.
+
+### 18.5.4 LogitBoost
+
+Exponential loss pus a lot of weight on misclassified examples, which makes the method sensitive to outliers. Since $e^{-\tilde{y}f}$ is not the logarithm of a pmf for binary variables $\tilde{y}\in\{-1,+1\}$, we can't recover probability estimates from $f(\boldsymbol x)$. 
+
+Log loss only punishes mistakes linearly, which means that we can extract probabilities using 
+$$
+p(y=1|\boldsymbol x) = \frac{1}{1+e^{-2f(\boldsymbol x)}}.
+$$
+The expected log-loss is given by
+$$
+L_m(F) = \sum_{i=1}^N\log[1+\exp(-2\tilde{y}_i(f_{m-1}(\boldsymbol x)+F(\boldsymbol x_i)))],
+$$
+which can be optimized using a Newton update. This is known as logitBoost. The key subroutine is the ability of the weak learner $F$ to solve a weighted least squares problem. 
+
+### 18.5.5 Gradient Boosting
+
+It's possible to derive a generic version of boosting for different loss functions, known as gradient boosting. Suppose we want to solve $\hat{\boldsymbol f} = \arg\min_{\boldsymbol f}\mathcal{L}(\boldsymbol f)$ by performing gradient descent in the space of functions. At step $m$, let $\boldsymbol g_m$ be the gradient of $\mathcal{L}(\boldsymbol f)$ evaluated at $\boldsymbol f = \boldsymbol f_{m-1}$:
+$$
+g_{im} = \left[\frac{\partial\ell(y_i, f(\boldsymbol x_i))}{\partial f(\boldsymbol x_i)}\right]_{f= f_{m-1}}.
+$$
+Then, we make the update
+$$
+\boldsymbol f_m = \boldsymbol f_{m-1} -\beta_m\boldsymbol g_m,
+$$
+where $\beta_m$ is the step length and
+$$
+\beta_m = \arg\min_{\beta}\mathcal{L}(\boldsymbol f_{m-1}-\beta \boldsymbol g_m).
+$$
+Fitting a weak learner to approximate the negative gradient signal, i.e.
+$$
+F_m = \arg\min_{F}\sum_{i=1}^N(g_{im}-F(\boldsymbol x_i))^2
+$$
+allows us to learn a function that can generalize. 
+
+For classification, we can use log-loss, which leads to an algorithm called BinomialBoost, which does not need to be able to do weighted fitting. 
+
+With large datasets, we can use a stochastic variant which subsamples a random fraction of the data to pass to the regression tree at each iteration, which is called stochastic gradient boosting. 
+
+### 18.5.5.1 Gradient Tree Boosting
+
+Gradient boosting nearly always assumes that the weak learner is a regression tree of the form
+$$
+F_m(\boldsymbol x) = \sum_{j=1}^{J_m}w_{jm}\mathbb{I}(\boldsymbol x\in R_{jm}),
+$$
+where $w_{jm}$ is the predicted output for region $R_{jm}$. This is called gradient boosted regression trees or gradient tree boosting. 
+
+To use this, we find good regions $R_{jm}$ for tree $m$ using standard regression tree learning on the residuals and re-solve for the weights at each leaf by
+$$
+\hat w_{jm}= \arg\min_w \sum_{\boldsymbol x_i\in R_{jm}} \ell(y_i,f_{m-1}(\boldsymbol x_i)+w).
+$$
+
+### 18.5.5.2 XGBoost
+
+XGBoost stands for extreme gradient boosting, and is an efficient implementation of gradient boosted trees. It adds a regularizer on the tree complexity, uses a second order approximation of the loss instead of a linear approximation, samples features at internal nodes, and uses other methods to ensure scalability. 
+
+XGBoost optimizes the following
+$$
+\mathcal{L}(f) = \sum_{i=1}^N\ell(y_i,f(\boldsymbol x_i)) + \Omega(f),
+$$
+where 
+$$
+\Omega(f) = \gamma J + \frac{1}{2}\lambda\sum_{j=1}^Jw_j^2
+$$
+is the regularizer, where $J$ is the number of leaves, and $\gamma\geq 0$ and $\lambda \geq 0$ are regularization coefficients.
+
+### 18.6 Interpreting Tree Ensembles
+
+Ensembles of trees lose the property of being interpretable, but there are some simple methods to interprete what function has been learned.
+
+### 18.6.1 Feature Importance
+
+A measure for feature importance of feature $k$ is
+$$
+R_k(T) = \sum_{j=1}^{J-1}G_j\mathbb{I}(v_j=k),
+$$
+where the sum is over all non-leaf nodes, $G_j$ is the gain in accuracy at node $j$, and $v_j = k$ if node $j$ uses feature $k$. Averaging over all trees in the ensemble gives a more reliable estimate
+$$
+R_k = \frac{1}{M}\sum_{m=1}^MR_k(T_m).
+$$
+
+### 18.6.2 Partial Dependency Plots
+
+A partial dependency plot for feature $k$ is a plot of 
+$$
+\overline{f}_k(x_k) = \frac{1}{N}\sum_{n=1}^Nf(\boldsymbol x_{n,-k},x_k)
+$$
+vs $x_k$. All features are marginalized out except $k$. For a binary classifier, convert to log odds $\log p(y=1|x_k)/p(y=0|x_k)$ before plotting. 
+
+Interaction effects between features $j$ and $k$ can be captured by computing
+$$
+\overline{f}_{jk}(x_j,x_k) = \frac{1}{N}\sum_{n=1}^Nf(\boldsymbol x_{n,-jk},x_j,x_k).
+$$
+
+
+
 ## 6 Alzheimer's data Problem
 
 ```{r}

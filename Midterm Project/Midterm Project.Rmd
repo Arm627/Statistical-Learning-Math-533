@@ -1392,10 +1392,9 @@ final_res_boost %>%
   collect_metrics()
 ```
 
-**The tuned boosting model produces test misclassification rate of 0.157037**
+The tuned boosting model produces test misclassification rate of 0.157037
 
-
-**Comparing the three models: Random forest, bagging and boosting had misclassification rate of 0.1540741, 0.1688889, and 0.157037 respectively. Therefore, the Random Forest was the best model when comparing misclassification rate which means about 15.4% of predictions made were incorrect on the test set.**
+Comparing the three models: Random forest, bagging and boosting had misclassification rate of 0.1540741, 0.1688889, and 0.157037 respectively. Therefore, the Random Forest was the best model when comparing misclassification rate which means about 15.4% of predictions made were incorrect on the test set.
 
 
 

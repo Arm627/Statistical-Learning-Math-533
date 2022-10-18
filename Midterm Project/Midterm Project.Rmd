@@ -15,7 +15,6 @@ options(knitr.kable.NA = '')
 ```
 
 ## 1 ISLR Chapter 9 Summary
-
 ### 9.1 Maximal Margin Classifier 
 
 This section is focus on definition and introduction the concept of an optimal separating hyperplane.

@@ -766,6 +766,8 @@ test_df <- testing(split)
 # Random Forest
 
 # The reason for not tuning trees is because it takes too long
+
+# Define the specification for classification for random forest for tidymodels where mtry and min_n will be tuned
 spec <- rand_forest(
   mtry = tune(),
   trees = 500,
@@ -773,30 +775,35 @@ spec <- rand_forest(
   set_mode("classification") %>%
   set_engine("ranger")
 
+# Define a recipe for tidymodels
 recipe <- recipe(diagnosis ~ ., data = train_df)
 
+# Define the workflow for tidymodels
 wf <- workflow() %>%
   add_recipe(recipe) %>% 
   add_model(spec)
 
+# Define the folds for cross validated tuning
 folds <- vfold_cv(train_df, v = 10)
 ```
 
 ```{r}
+# Register parallel computation
 registerDoParallel()
 
+# Tune the model using the folds
 tune_res <- tune_grid(
   wf,
   resamples = folds,
   grid = 10
 )
-
-tune_res
 ```
 
 ```{r}
+# Select the best model configuration based on roc area under curve
 best_auc <- select_best(tune_res, "roc_auc")
 
+# Finalize the best model using the best hyperparameters
 final_rf <- finalize_model(
   spec,
   best_auc
@@ -807,13 +814,16 @@ final_rf
 
 ```{r}
 set.seed(123)
+# Finalize the workflow
 final_wf <- workflow() %>%
   add_recipe(recipe) %>%
   add_model(final_rf)
 
+# Finalize the fit
 final_res <- final_wf %>%
   last_fit(split)
 
+# Output accuracy and roc_auc
 final_res %>%
   collect_metrics()
 ```
@@ -823,6 +833,8 @@ final_res %>%
 
 ```{r}
 # Bagging
+
+# Define the specification for classification for bagging for tidymodels where min_n, tree_depth and cost complexity will be tuned
 spec_bagging <- bag_tree(
   mode = "classification",
   cost_complexity = tune(),
@@ -830,27 +842,30 @@ spec_bagging <- bag_tree(
   min_n = tune()) %>% 
   set_engine("rpart")
 
+# Add the recipe from above and the bagging specification
 wf_bagging <- workflow() %>%
   add_recipe(recipe) %>% 
   add_model(spec_bagging)
 ```
 
 ```{r}
+# Enable parrallel compute
 registerDoParallel()
 
+# Tune the hyperparameters for the bagging model
 tune_res_bagging <- tune_grid(
   wf_bagging,
   resamples = folds,
   grid = 10
 )
-
-tune_res_bagging
 ```
 
 
 ```{r}
+# Select the best bagging model based on roc area under curve
 best_auc_bagging <- select_best(tune_res_bagging, "roc_auc")
 
+# Finalize the model based on the best hyperparameters
 final_bag <- finalize_model(
   spec_bagging,
   best_auc_bagging
@@ -861,13 +876,16 @@ final_bag
 
 ```{r}
 set.seed(123)
+# Finalize the workflow
 final_wf_bag <- workflow() %>%
   add_recipe(recipe) %>%
   add_model(final_bag)
 
+# Finalize the fit
 final_res_bag <- final_wf_bag %>%
   last_fit(split)
 
+# Output accuracy and roc_auc 
 final_res_bag %>%
   collect_metrics()
 ```
@@ -880,6 +898,8 @@ final_res_bag %>%
 # Boosting
 
 # The reason for not tuning trees is because it takes too long
+
+# Define the specification for classification for boosting for tidymodels where mtry and min_n will be tuned
 spec_boosting <- boost_tree(
   mode = "classification",
   mtry = tune(),
@@ -896,6 +916,7 @@ split <- initial_split(onehot_alz)
 train_df <- training(split)
 test_df <- testing(split)
 
+# Redefine folds, recipe and workflow
 folds <- vfold_cv(train_df, v = 10)
 
 recipe_boost <- recipe(diagnosis ~ ., data = train_df) 
@@ -906,20 +927,22 @@ wf_boosting <- workflow() %>%
 ```
 
 ```{r}
+# Enable parallel compute
 registerDoParallel()
 
+# Tune the boosting model
 tune_res_boosting <- tune_grid(
   wf_boosting,
   resamples = folds,
   grid = 10
 )
-
-tune_res_boosting
 ```
 
 ```{r}
+# Select the best boosting hyperparameters based on roc area under curve
 best_auc_boosting <- select_best(tune_res_boosting, "roc_auc")
 
+# Finalaize the model
 final_boost <- finalize_model(
   spec_boosting,
   best_auc_boosting
@@ -930,13 +953,16 @@ final_boost
 
 ```{r}
 set.seed(123)
+# Finalaize the workflow
 final_wf_boost <- workflow() %>%
   add_recipe(recipe_boost) %>%
   add_model(final_boost)
 
+# FInalaize the fit
 final_res_boost <- final_wf_boost %>%
   last_fit(split)
 
+# Output accuracy and roc_auc
 final_res_boost %>%
   collect_metrics()
 ```

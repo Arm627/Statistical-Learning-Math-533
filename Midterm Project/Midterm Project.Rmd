@@ -707,6 +707,7 @@ library(ranger)
 library(baguette)
 library(xgboost)
 library(mltools)
+library(ggplot2)
 ```
 
 
@@ -743,13 +744,48 @@ for (var in colnames(alz)) {
 print(factoredVars)
 ```
 
-
 ```{r}
 # Data cleaning (mainly just converting ints to factors)
 alz <- alz %>% 
   select(-id) %>% 
   mutate_at(factoredVars, factor)
 ```
+
+
+
+```{r}
+### Some basic data exploration on a few predictors
+
+#### Distribution of diagnosis
+ggplot(data = alz, mapping = aes(x = diagnosis)) +
+  geom_bar()
+
+alz %>% group_by(diagnosis) %>% summarise(prop = n() / nrow(alz))
+```
+
+
+A normal (0) diagnosis is slightly more skewed in terms of frequency of occurrence then the other two diagnosis types. 
+
+```{r}
+# Effect of age on diagnosis
+ggplot(data = alz, mapping = aes(x = age, y = diagnosis)) +
+  geom_boxplot()
+
+alz %>% group_by(diagnosis) %>% summarise(mean_age = mean(age), med_age = median(age), sd_age = sd(age))
+```
+
+
+Seems a diagnosis of normal (0) with regards to age is slightly skewed towards being younger which makes since alzhemiers is a progressive degenerative disease. This is probably a significant predictor.
+
+
+```{r}
+# Effect of mealprep on diagnosis
+ggplot(data = alz, mapping = aes(x = diagnosis, color = mealprep, fill = mealprep)) +
+  geom_bar()
+```
+
+
+Mealprep of 0 (normal meal prep without assistance) is heavily skewed towards a diagnosis of normal (0) and the frequency of progressively worse meal prep scores increases as the diagnosis worsens implying mealprep may be a significant predictor.
 
 
 ```{r}
@@ -970,7 +1006,7 @@ final_res_boost %>%
 **The tuned boosting model produces test misclassification rate of 0.157037**
 
 
-**Comparing the three models: Random forest, bagging and boosting had misclassification rate of 0.1540741, 0.1688889, and 0.157037 respectively. Therefore, the Random Forest was the best model when comparing misclassification rate.**
+**Comparing the three models: Random forest, bagging and boosting had misclassification rate of 0.1540741, 0.1688889, and 0.157037 respectively. Therefore, the Random Forest was the best model when comparing misclassification rate which means about 15.4% of predictions made were incorrect on the test set.**
 
 
 

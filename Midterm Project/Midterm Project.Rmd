@@ -14,7 +14,7 @@ options(knitr.kable.NA = '')
 ## 1 ISLR Chapter 9 Summary
 ### 9.1 Maximal Margin Classifier 
 
-This section is focus on definition and introduction the concept of an optimal separating hyperplane.
+We focus here on the support vector machines (SVM), one of the best "out of the box" classifiers that can be readily employed from a library.  First, we must understand the maximal margin classifier, as the SVM is a generalization of this simpler tool. The maximal margin classifier is elegant in practice, but it cannot be applied to most data sets since it requires that the classes be separable by a linear boundary.  Once we understand support vector machines, we will study support vector classifiers, a more broadly applicable extension of the maximal margin classifier which can be used more broadly.  Third, we discuss the support vector machine, a further extension of the support vector classifier which can accommodate non-linear class boundaries through the use of "kernels".  These classifiers are designed for use with binary classes, but we will then discuss how to use them in the case of three or more classes.  Finally, we probe the connections between SVMs and logistic regression which interestingly weren't clear until after SVMs had already been developed.
 
 #### 9.1.1 What Is a Hyperplane?
 
@@ -51,12 +51,18 @@ $$
 $$
 \beta_{0}+\beta_{1}X_{1}+\beta_{2}X_{2}+\cdots+\beta_{p}X_{p}<0  \quad if \quad y_{i}=-1,
 $$
-Next, we use the constructed separating hyperplane to construct a very natural classifier: a test observation is assigned a class depending on which side of the hyperplane it is located. The classifier is based on a separating hyperplane which leads to a linear decision boundary.
 
+We can also make use of the "magnitude of $f(x^*)$.  "We say that if $f(x^*)$ is far from zero, then this means that $x^*$ is located near the hyperplan, and so we are less certain about the class assignment for $x^*$."  
+
+Next, we use the constructed separating hyperplane to construct a very natural classifier: a test observation is assigned a class depending on which side of the hyperplane it is located. The classifier is based on a separating hyperplane which leads to a linear decision boundary.
 
 #### 9.1.3 The Maximal Margin Classifier 
 
-The goal is to construct a classifier based upon a separating hyperplane. Instinctively, the maximal margin hyperplane is the separating hyperplane that is farthest from the training observations. Then, we can classify a test observation based on which side of the maximal margin hyperplane it lies, which is the maximal margin classifier.
+To decide which hyperplane to use as a decision boundary (out of an infinite number of possibilities), we natural choice is the maximal margin hyperplane.  Notice the relation to the name "maximal margin classifier" here.  "This is the separating hyperplane that is farthest from the training observations.  To find it, we can compute the (perpendicular) distance from each training observation to a given separating hyperplane; the smallest such distance is the minimal distance from the observations to the hyperplane is known as the margin."  Although the maximal margin classifier is often successful, it can also lead to overfitting when the number of observations is large.
+
+As before, if $\beta_0, \beta_1, \dots, \beta_p$ are the coefficients of the maximal margin hyperplane, then "the maximal margin classifier classifies the test observation $x^*$ based [simply] on the sign of $f(x^*) = \beta_0 + \beta_1 x^* + \dots + \beta_p x_p^*$.  We can think of the maximal margin hyperplane as representing the "mid-line of the widest 'slab' that we can insert between the classes."
+
+We use the term "support vectors" to indicate the training observations that are equidistant from the maximal margin hyperplane.  This term reflects that the observations are vectors in p-dimensional space, and they "support" the maximal margin hyperplane in the sense that if these points were moved slightly then the entire maximal margin hyperplane would move as well.  "Interestingly, the maximal margin hyperplane depends directly on the support vectors, but not on the observations: a movement to any of the other observations would not affect the separating hyperplane" as long as that movement doesn't cause the observation to cross the margin boundary.  "The fact that the maximal margin hyperplane depends directly on only a small subset of observations is an important property" which will affect our discussion of support vector classifiers and support vector machines.
 
 #### 9.1.4 Construction of the Maximal Margin Classifier 
 
@@ -80,7 +86,9 @@ If a separating hyperplane exists, we can use the maximal margin classifier to p
 
 #### 9.2.1 Overview of the Support Vector Classifier
 
-Suppose we have two classes observations. Instead of perfectly separating the two classes, the support vector classifier is more interested in the greater robustness to individual observations and better classification of most of the training observations. In other words, the support vector classifier allows some observations to lie on the incorrect side of the margin or even the incorrect side of the hyperplane. 
+In many cases, observations belonging to two classes are separable by a hyperplane, so maximal margin classifiers cannot be used.  "In fact, even if a separating hyperplane does exist, then there are instances in which a classifier based on a separating hyperplane might not by desirable."  It is necessarily true that a classifier based on a separating hyperplane will perfectly classify all training observations, which unfortunately can lead to sensitivity to individual observations; sometimes a single observations can lead to a dramatic change in the maximal margin hyperplane.  This sensitivity to very few observations suggests overfitting may occur on the training data set.
+
+In these cases we may consider a classifier based on a hyperplane that does not perfectly separate the two cases.  We may do this to increase robustness to individual observations and to attain better classification of most of the training observations.  The philosophy of the support vector classifier (or soft margin classifier) is that "it could be worthwhile to misclassify a few training observations in order to do a better job in classifying the remaining observations."
 
 #### 9.2.2 Details of the Support Vector Classifier 
 
@@ -95,8 +103,9 @@ $$
   (9.14): \quad y_{i}(\beta_{0}+\beta_{1}x_{i1}+\beta_{2}x_{i2}+\dots+\beta_{p}x_{ip}) \geq M(1-\epsilon_{i}) \quad \forall i=1,\dots,n)
 $$
 $$
-  (9.15): \epsilon_{i} \geq 0, \quad \sum_{i=1}^{n}\epsilon_{i}\leq C, where \; C \; is \; a \; nonnegative \; tuning \; parameter
+  (9.15): \epsilon_{i} \geq 0, \quad \sum_{i=1}^{n}\epsilon_{i}\leq C
 $$
+where C is a non-negative tuning parameter.
 
 First, we use the slack variable $\epsilon_{i}$ to locate the $i$th observation relative to the hyperplane and relative to the margin as follows:
 
@@ -106,11 +115,11 @@ First, we use the slack variable $\epsilon_{i}$ to locate the $i$th observation 
 
 (3): If $\epsilon_{i} \geq 1$ then it is on the wrong side of the hyperplane.
 
+We can think of C as a "budget" for the amount that the margin can be violated by the observations.  If $C$ is 0, then there is no "budget" for violations and we have ourselves a maximal margin classifier.  In practice, "C is treated as a tuning parameter that is generally chosen via cross-validation."  Then, we use the $C$ in (9.15) to be the controller for the bias-variance trade-oﬀ of the statistical learning technique. According to the text, we know ``When $C$ is small, we seek narrow margins that are rarely violated; this amounts to a classifier that is highly fit to the data, which may have low bias but high variance. On the other hand, when $C$ is larger, the margin is wider and we allow more violations to it; this amounts to fitting the data less hard and obtaining a classifier that is potentially more biased but may have lower variance."
 
-Then, we use the $C$ in (9.15) to be the controller for the bias-variance trade-oﬀ of the statistical learning technique. According to the text, we know ``When $C$ is small, we seek narrow margins that are rarely violated; this amounts to a classifier that is highly fit to the data, which may have low bias but high variance. On the other hand, when $C$ is larger, the margin is wider and we allow more violations to it; this amounts to fitting the data less hard and obtaining a classifier that is potentially more biased but may have lower variance."
+The optimization problem for $C$ has a "very interesting property: it turns out that only observations that either lie on the margin or that violate the margin will affect the hyperplane, and hence the classifier obtained."  Thus, observations that are strictly "correct" relative to the margin do not affect the support vector classifier.  We again use the term "support vectors" like before, but now for observations that lie directly on the margin or the wrong side of the margin for their class.
 
-
-Finally, the observations that lie directly on the margin or on the wrong side of the margin for their class are support vectors, which affect and result the support vector classifier. 
+Since "the support vector classifier's decision rule is based only on a potentially small subset of the training observations (the support vectors), ... it is quite robust to the behavior of observations that are far away from the hyperplane."  This property is potentially useful and makes support vector classifiers distinct from other classification methods we have studied such as linear discriminant analysis.
 
 ### 9.3 Support Vector Machines 
 #### 9.3.1 Classification with Non-Linear Decision Boundaries 
@@ -133,6 +142,8 @@ $$
   \sum_{i=1}^{n}\epsilon_{i}\leq C, \quad \epsilon_{i} \geq 0, \quad \sum_{j=1}^{p}\sum_{k=1}^{2}\beta_{jk}^2=1
 $$
 
+But how does this lead to a non-linear decision boundary?  When we enlarge the feature space, the decision boundary resulting from the above maximization rule (9.16) is actually linear.  But, back in the original feature space, the decision boundary is of the form $q(x) = 0$ where $q$ is a quadratic polynomial whose solutions are generally non linear.  Additionally, we may choose to enlarge the feature space with higher-order polynomial terms, interaction terms, or other non-linear functions of the predictors.  As there are many possible ways to enlarge the feature space, we should be careful not to become overzealous, ending up with large, unwieldy number of features, rendering computation unmanageable.  This is where the support vector machine comes into play , which "allows us to enlarge the feature space used by the support vector classifier in a ways that leads to efficient computations."
+
 #### 9.3.2 The Support Vector Machine 
 
 By using kernels, the extension of the support vector classifier that results from enlarging the feature space in a specific way is known as the support vector machine (SVM). Suppose we have a support vector classifier that can be represented as
@@ -144,6 +155,8 @@ $$
 (2): If we take a polynomial kernel of degree $d$  $$K\langle x, x_{i}\rangle = (1 + \sum_{j=1}^{p}x_{ij}x_{i'j})^d$$  , it is a non-linear support vector classifier.
 
 (3): If we take a radial kernel $$K\langle x, x_{i}\rangle = \exp(-\gamma \sum_{j=1}^{p}(x_{ij}-x_{i'j})^2)$$  , it is a non-linear support vector classifier.
+
+One of the central advantages of using a kernel rather than simply enlarging the feature space using functions of the original features is computational.  Using kernels, we need only to compute $K(x_i , x'_i)$ for all $n \choose 2$ distinct pairs $i$, $i'$.  We can do this "without explicitly working in the enlarged feature space.  This is important because in many applications of SVMs, the enlarged feature space is so large that computations are intractable."
 
 #### 9.3.3 An Application to the Heart Disease Data 
 
@@ -175,6 +188,12 @@ $$
 $$
 
 The hinge loss function of SVM is closely related to the loss function used in logistic regression. Due to the similarities, the results of logistic regression and the support vector classifier are often similar. SVMs tend to behave better than logistic regression if the classes are well separated; whereas logistic regression is often preferred if there are more overlapping regimes.
+
+An interesting characteristic of the support vector classifier is that "only support vectors play a role in the classifier obtained; observations on the correct side of the margin do not affect it."  Now we understand why: the loss function defined above is exactly zero for observations for which $y_{i}(\beta_{0}+\beta_{1}x_{i1}+\beta_{2}x_{i2}+\dots+\beta_{p}x_{ip}) \geq 1$, corresponding the observations on the correct side of the margin.  This is in notable contrast to the logistic regression loss function where is not exactly zero anywhere (though it does get very small for observations far away from the decision boundary).
+
+We have seen that the use of kernels to enlarge features spaces is a powerful aspect of SVMs.  But are SVMs unique in their ability to harness kernels like this?  No.  It turns out we can also perform logistic regression or many other classification methods using non-linear kernels.  However, we typically encounter the use of non-linear kernels in SVMs due to the history of when these techniques were popularized.  
+
+One further application of SVMs is in performing regression for quantitative responses, called support vector regression.  Support vector regression seeks coefficients that maximize a different type of loss than sum of squared residuals, where only residuals large in absolute value than some positive constant contribute to the loss function.  This extends the idea of "margins" in support vector classifiers to the regression setting.
 
 ## 2 Murphy Section 17.3 Summary
 ### 17.3.1 Large margin classifiers

@@ -3,9 +3,6 @@ title: "Midterm Project"
 author: "Brandon Amaral, Monte Davityan, Nicholas Lombardo, Hongkai Lu"
 date: "10/19/2022"
 output:
-  html_document:
-    df_print: paged
-  word_document: default
   pdf_document: default
 ---
 
@@ -43,7 +40,7 @@ Thus, we can think of the hyperplane as dividing $p$-dimensional space into two 
 
 #### 9.1.2 Classification Using a Separating Hyperplane
 
-First, suppose that we have an $n \times p$ data matrix $\mathbf X$ that consists of $n$ training observations in a $p$-dimensinal space. The training observations fall into two groups, where $ y_{1}, \dots, y_{n} \in \{-1,1\} $, -1 represents one class, and 1 the other class. 
+First, suppose that we have an $n \times p$ data matrix $\mathbf X$ that consists of $n$ training observations in a $p$-dimensinal space. The training observations fall into two groups, where $y_{1}, \dots, y_{n} \in \{-1,1\}$, -1 represents one class, and 1 the other class. 
 Second, try to construct a separating hyperplane which is a hyperplane that separates the training observations perfectly according to their class labels. That separating hyperplane has the below property:
 
 1: 
@@ -63,7 +60,7 @@ The goal is to construct a classifier based upon a separating hyperplane. Instin
 
 #### 9.1.4 Construction of the Maximal Margin Classifier 
 
-Suppose we have a set of $n$ training observations $ x_{1}, \dots, x_{n} \in \mathbb{R}^p $ and associated class labels $ y_{1}, \dots, y_{n} \in \{-1,1\} $, then the maximal margin hyperplane is to solve the optimization problem as follows:
+Suppose we have a set of $n$ training observations $x_{1}, \dots, x_{n} \in \mathbb{R}^p$ and associated class labels $y_{1}, \dots, y_{n} \in \{-1,1\}$, then the maximal margin hyperplane is to solve the optimization problem as follows:
 $$
   (9.9): \quad \underset {\beta_{0},\beta_{1},\dots,\beta_{p},M} {maximize} M
 $$
@@ -101,7 +98,7 @@ $$
   (9.15): \epsilon_{i} \geq 0, \quad \sum_{i=1}^{n}\epsilon_{i}\leq C, where \; C \; is \; a \; nonnegative \; tuning \; parameter
 $$
 
-First, we use the slack variable $ \epsilon_{i} $ to locate the $i$th observation relative to the hyperplane and relative to the margin as follows:
+First, we use the slack variable $\epsilon_{i}$ to locate the $i$th observation relative to the hyperplane and relative to the margin as follows:
 
 (1): If $\epsilon_{i} = 0$ then the $i$th observation is on the correct side of the margin
 
@@ -121,7 +118,7 @@ Finally, the observations that lie directly on the margin or on the wrong side o
 In the two-class setting, the support vector classifier is a natural approach  for classification if the boundary between the two classes is linear. For non-linear class boundaries, we could enlarge the feature space using quadratic, cubic, and even higher-order polynomial functions of the predictors to fit a support vector classifier. 
 
 
-Suppose we have a set of $n$ training observations $ x_{1}, \dots, x_{n} \in \mathbb{R}^p $ and associated class labels $ y_{1}, \dots, y_{n} \in \{-1,1\} $, we use $2p$ features to fit (9.12) - (9.15)
+Suppose we have a set of $n$ training observations $x_{1}, \dots, x_{n} \in \mathbb{R}^p$ and associated class labels $y_{1}, \dots, y_{n} \in \{-1,1\}$, we use $2p$ features to fit (9.12) - (9.15)
 $$
   X_{1},X_{1}^2,X_{2},X_{2}^2,\dots,X_{p},X_{p}^2.
 $$
@@ -142,15 +139,15 @@ By using kernels, the extension of the support vector classifier that results fr
 $$
   f(x) = \beta_{0}+\sum_{i \in S}\alpha_{i} K\langle x, x_{i}\rangle
 $$
-(1): If we take a linear kernel $$ K\langle x, x_{i}\rangle = \sum_{j=1}^{p}x_{ij}x_{i'j}  $$  , it is a linear support vector classifier.
+(1): If we take a linear kernel $$K\langle x, x_{i}\rangle = \sum_{j=1}^{p}x_{ij}x_{i'j}$$  , it is a linear support vector classifier.
 
-(2): If we take a polynomial kernel of degree $d$  $$  K\langle x, x_{i}\rangle = (1 + \sum_{j=1}^{p}x_{ij}x_{i'j})^d  $$  , it is a non-linear support vector classifier.
+(2): If we take a polynomial kernel of degree $d$  $$K\langle x, x_{i}\rangle = (1 + \sum_{j=1}^{p}x_{ij}x_{i'j})^d$$  , it is a non-linear support vector classifier.
 
-(3): If we take a radial kernel $$ K\langle x, x_{i}\rangle = \exp(-\gamma \sum_{j=1}^{p}(x_{ij}-x_{i'j})^2)  $$  , it is a non-linear support vector classifier.
+(3): If we take a radial kernel $$K\langle x, x_{i}\rangle = \exp(-\gamma \sum_{j=1}^{p}(x_{ij}-x_{i'j})^2)$$  , it is a non-linear support vector classifier.
 
 #### 9.3.3 An Application to the Heart Disease Data 
 
-In this section, we fit LDA and SVM to the heart disease training data. By using ROC curves, we can see the SVM using a polynomial kernel of degree $d = 1$ is slightly superior to LDA. Also, Figure 9.10 displays ROC curves for SVMs using a radial kernel with three values of $ \gamma $, which indicates a more flexible method will often produce lower training error rates but may not improve performance on test data. 
+In this section, we fit LDA and SVM to the heart disease training data. By using ROC curves, we can see the SVM using a polynomial kernel of degree $d = 1$ is slightly superior to LDA. Also, Figure 9.10 displays ROC curves for SVMs using a radial kernel with three values of $\gamma$, which indicates a more flexible method will often produce lower training error rates but may not improve performance on test data. 
 
 ### 9.4 SVMs with More than Two Classes 
 
@@ -182,7 +179,7 @@ The hinge loss function of SVM is closely related to the loss function used in l
 ## 2 Murphy Section 17.3 Summary
 ### 17.3.1 Large margin classifiers
 
-Suppose we have a binary classifier with the form $ h(x) = sign(f(x)) $, then the decision boundary is given by a linear function as follow:
+Suppose we have a binary classifier with the form $h(x) = sign(f(x))$, then the decision boundary is given by a linear function as follow:
 $$
   f(\boldsymbol x) =  \boldsymbol w ^T \boldsymbol x + w_{0}
 $$
@@ -202,7 +199,7 @@ $$
 ### 17.3.2 The dual problem
 
 The final objective of the large margin classifier is a standard quadratic problem, and we can convert it to a dual problem in convex optimization. 
-The generalized Lagrangian yields the following after plugging $ \hat{w} = \sum_{n=1}^{N} \hat{\alpha_{n}} \tilde{y_n} x_{n} $ and $ 0 = \sum_{n=1}^{N} \hat{\alpha_{n}} \tilde{y_n}  $
+The generalized Lagrangian yields the following after plugging $\hat{w} = \sum_{n=1}^{N} \hat{\alpha_{n}} \tilde{y_n} x_{n}$ and $0 = \sum_{n=1}^{N} \hat{\alpha_{n}} \tilde{y_n}$
 $$
   \mathcal{L}(\hat{\boldsymbol w}, \hat{w_{0}}, \alpha) = - \frac{1}{2} \sum_{i=1}^{N} \sum_{j=1}^{N} \alpha_{i}\alpha_{j} \tilde{y_i} \tilde{y_j} x_{i}^Tx_{j} + \sum_{n=1}^{N} \alpha_n
 $$
@@ -217,7 +214,7 @@ Slack variables are introduced if the data is not linearly separable. We use the
 $$
   \underset{\boldsymbol w, w_{0}, \boldsymbol \xi}{min} \frac{1}{2} ||w||^2 + C \sum_{n=1}^{N_{\mathcal{D}}} \xi_n \quad s.t. \quad \xi_n \geq0,\; \hat{y_{n}}(\boldsymbol w ^T \boldsymbol x + w_{0}) \geq1 - \xi_n
 $$
-Correspondingly, we have the Lagrangian for the soft margin classifier after optimizing out $ \boldsymbol w, w_0, \; and \; \boldsymbol \xi $,
+Correspondingly, we have the Lagrangian for the soft margin classifier after optimizing out $\boldsymbol w, w_0, \; and \; \boldsymbol \xi$,
 
 $$
   \mathcal{L}(\alpha) = \sum_{i=1}^{N} \alpha_i - \frac{1}{2} \sum_{i=1}^{N} \sum_{j=1}^{N} \alpha_{i}\alpha_{j} \tilde{y_i} \tilde{y_j} x_{i}^Tx_{j} 
@@ -245,11 +242,11 @@ where $a$ and $b$ can be estimated by maximum likelihood on a separate validatio
 
 ### 17.3.6 Connection with logistic regression 
 
-For the data points that lie on the correct side of the decision boundary, we have $ \xi_n = 0 $; for the others, we have $ \xi_n = 1 - \tilde{y}_nf(\boldsymbol x_n) $. Then, we can rewrite the objective equation of the soft margin classifiers as follows:
+For the data points that lie on the correct side of the decision boundary, we have $\xi_n = 0$; for the others, we have $\xi_n = 1 - \tilde{y}_nf(\boldsymbol x_n)$. Then, we can rewrite the objective equation of the soft margin classifiers as follows:
 $$
   \mathcal{L}(w) = \sum_{i=1}^{N} \ell_{hinge} (\tilde{y_n},f(x_n)) + \lambda ||w||^2
 $$
-where $ \lambda = (2C)^{-1} $ and $\ell_{hinge}$  is the hinge loss function as below:
+where $\lambda = (2C)^{-1}$ and $\ell_{hinge}$  is the hinge loss function as below:
 $$
   \ell_{hinge} (\tilde{y_n},\eta) = max(0,1-\tilde{y_n}\eta)
 $$
@@ -281,7 +278,7 @@ The kernel ridge regression is as follows:
 $$
   f(x; w) = k^T(\boldsymbol K+\lambda \boldsymbol I_N)^{-1}y
 $$
-where $ k= [\mathcal K(x,x_1), \dots, \mathcal K(x,x_N)] $
+where $k= [\mathcal K(x,x_1), \dots, \mathcal K(x,x_N)]$
 
 ### 17.3.10 SVMs for regression  
 
@@ -1105,24 +1102,22 @@ library(ggplot2)
 ```{r, cache=TRUE}
 # Read in data
 alz <- read.csv("alzheimer_data.csv")
-
-head(alz)
-
-dim(alz)
-
-#summary(alz)
 ```
 
 ```{r, cache=TRUE}
-# Get Count Of Unique Results (if the count is low its probably a factor) (This is used below in the data cleaning section)
+# Get Count Of Unique Results (if the count is low its probably a factor) 
+# (This is used below in the data cleaning section)
 
-# The reason for this is because there are many variables that are integers that should be factors and I am too lazy to manually convert them to factors so this does it for me based on the threshold of unique values
+# The reason for this is because there are many variables that are integers 
+# that should be factors and I am too lazy to manually convert them to factors 
+# so this does it for me based on the threshold of unique values
 countResults <- hash()
 for (var in colnames(alz)) {
   countResults[[var]] <- nrow(unique(alz[var]))
 }
 
-# Note from the results below it seems having unique elements less than 10 is a good enough threshold to determine if a variable is a factor or not
+# Note from the results below it seems having unique elements less than 10 
+# is a good enough threshold to determine if a variable is a factor or not
 print(countResults)
 
 factoredVars <- character()
@@ -1162,7 +1157,8 @@ A normal (0) diagnosis is slightly more skewed in terms of frequency of occurren
 ggplot(data = alz, mapping = aes(x = age, y = diagnosis)) +
   geom_boxplot()
 
-alz %>% group_by(diagnosis) %>% summarise(mean_age = mean(age), med_age = median(age), sd_age = sd(age))
+alz %>% group_by(diagnosis) %>% 
+  summarise(mean_age = mean(age), med_age = median(age), sd_age = sd(age))
 ```
 
 
@@ -1171,7 +1167,7 @@ Seems a diagnosis of normal (0) with regards to age is slightly skewed towards b
 
 ```{r, cache=TRUE}
 # Effect of mealprep on diagnosis
-ggplot(data = alz, mapping = aes(x = diagnosis, color = mealprep, fill = mealprep)) +
+ggplot(alz, aes(x = diagnosis, color = mealprep, fill = mealprep)) +
   geom_bar()
 ```
 
@@ -1194,7 +1190,8 @@ test_df <- testing(split)
 
 # The reason for not tuning trees is because it takes too long
 
-# Define the specification for classification for random forest for tidymodels where mtry and min_n will be tuned
+# Define the specification for classification for random forest for 
+# tidymodels where mtry and min_n will be tuned
 spec <- rand_forest(
   mtry = tune(),
   trees = 500,
@@ -1261,7 +1258,8 @@ The tuned random forest model produces test misclassification rate of 0.1540741.
 ```{r, cache=TRUE}
 # Bagging
 
-# Define the specification for classification for bagging for tidymodels where min_n, tree_depth and cost complexity will be tuned
+# Define the specification for classification for bagging for tidymodels 
+# where min_n, tree_depth and cost complexity will be tuned
 spec_bagging <- bag_tree(
   mode = "classification",
   cost_complexity = tune(),
@@ -1326,7 +1324,8 @@ The tuned bagging model produces test misclassification rate of 0.1688889.
 
 # The reason for not tuning trees is because it takes too long
 
-# Define the specification for classification for boosting for tidymodels where mtry and min_n will be tuned
+# Define the specification for classification for boosting for tidymodels 
+# where mtry and min_n will be tuned
 spec_boosting <- boost_tree(
   mode = "classification",
   mtry = tune(),
@@ -1334,8 +1333,10 @@ spec_boosting <- boost_tree(
   min_n = tune()) %>% 
   set_engine("xgboost")
 
-# Since boosting (specifically xgboost) cant handle factors, convert the categorical variables into onehot encoded values
-onehot_alz <- data.table::data.table(alz) %>% one_hot(cols = factoredVars[2:length(factoredVars)])
+# Since boosting (specifically xgboost) cant handle factors, convert the 
+# categorical variables into onehot encoded values
+onehot_alz <- data.table::data.table(alz) %>% 
+  one_hot(cols = factoredVars[2:length(factoredVars)])
   
 # Split into training and testing again with the onehot encoded data
 set.seed(123)
@@ -1380,12 +1381,12 @@ final_boost
 
 ```{r, cache=TRUE}
 set.seed(123)
-# Finalaize the workflow
+# Finalize the workflow
 final_wf_boost <- workflow() %>%
   add_recipe(recipe_boost) %>%
   add_model(final_boost)
 
-# FInalaize the fit
+# Finalize the fit
 final_res_boost <- final_wf_boost %>%
   last_fit(split)
 

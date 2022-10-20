@@ -1,5 +1,5 @@
 ---
-title: "Midterm Project"
+title: "Math 533 Midterm Project"
 author: "Brandon Amaral, Monte Davityan, Nicholas Lombardo, Hongkai Lu"
 date: "10/19/2022"
 output:

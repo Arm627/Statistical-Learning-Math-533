@@ -3,9 +3,9 @@ title: "Midterm Project"
 author: "Brandon Amaral, Monte Davityan, Nicholas Lombardo, Hongkai Lu"
 date: "10/19/2022"
 output:
-  word_document: default
   html_document:
     df_print: paged
+  word_document: default
   pdf_document: default
 ---
 
@@ -294,7 +294,7 @@ $$
 In this lab, we demonstrate the support vector classifier and the support vector machine (SVM).
 
 ### 9.6.1 Support Vector Classifier
-To start, we generate observations belonging to classes and visually inspect whether they are linearly separable.
+To start, we generate observations belonging to two classes and visually inspect whether they are linearly separable.
 ```{r}
 set.seed(1)
 x <- matrix(rnorm(20*2), ncol=2)
@@ -303,7 +303,7 @@ x[y == 1, ] <- x[y == 1, ] +1
 plot(x, col = (3 - y))
 ```
 
-We see they are not linearly separable, so a maximal margin classifier is not usable.  Let's set up a support vector classifier.  To do so, we need to encode the response as a factor variable.  We'll create a data fram with the response coded as a factor.  Then we use the svmfit() function from the e1071 library.
+We see they are not linearly separable, so a maximal margin classifier is not usable.  Let's set up a support vector classifier.  To do so, we need to encode the response as a factor variable.  We'll create a data frame with the response coded as a factor.  Then we will use the svmfit() function from the e1071 library.
 ```{r}
 dat <- data.frame(x = x, y = as.factor(y))
 library(e1071)
@@ -374,6 +374,7 @@ So far, we have only considered data sets where the two classes were not linearl
 x[y == 1, ] <- x[y == 1, ] + 0.5
 plot(x, col = (y+5)/2, pch = 19)
 ```
+
 We see that the observations are linearly separable, but just barely!  In order to produce strictly separated classes (as in a maximal margin classifier), we can set the "cost" value very high.
 
 ```{r}
@@ -396,7 +397,7 @@ Although our model now has a single misclassified training observation, we can e
 ### 9.6.2 Support Vector Machine (SVM)
 To use a non-linear kernal in our SVM, we can set the kernel type to other values, such as "polynomial" or "radial".  These non-linear kernels also require a second argument; we must specify a "degree" for polynomial" and a "gamma" for "radial".
 
-Let's first generate a data with a non-linear class boundary.
+Let's first generate a data set with a non-linear class boundary.
 ```{r}
 set.seed(1)
 x <- matrix(rnorm(200 * 2), ncol = 2)
@@ -420,14 +421,14 @@ This SVM does indeed have a decision boundary that is clearly not linear; it is 
 summary(svmfit)
 ```
 
-Our SVM with a radial kernal used 31 support vectors, and we see roughly a half dozen misclassified training observations.  Again, we can reduce the number of training errors by increasing the value of cost, but we expect an over-fit, irregular decision boundary which would likely perform worse with test data.  Let's see what that would look like.
+Our SVM with a radial kernal used 31 support vectors, and we see roughly a half dozen misclassified training observations.  Again, while we could potentially reduce the number of training errors by increasing the value of cost, we would expect this to produce an over-fit, irregular decision boundary which would likely perform worse with test data.  Let's see what that would look like.
 ```{r}
 svmfit <- svm(y ~ ., data = dat[train, ], kernel = "radial", 
               gamma = 1, cost = 1e5)
 plot(svmfit, dat[train, ])
 ```
 
-Let's again perform cross-validation using the tune() function to select the best choice training parameters.  This time, we will cross-validate across two parameters (gamma and cost) instead of one.  This will test a greater number of potential models (equal to the product of the number of each parameter)
+Let's again perform cross-validation using the tune() function to select the best choice training parameters.  This time, we will cross-validate across two parameters (gamma and cost) instead of one.  This will test a much greater number of potential models, equal to the product of the numbers of parameter values considered.
 ```{r}
 set.seed(1)
 tune.out <- tune(svm, y ~ ., data = dat[train, ], kernel = "radial", 
@@ -644,6 +645,7 @@ TrainErrorRate = c(ErrorRate0.001, ErrorRate0.01, ErrorRate0.1,
                          ErrorRate1, ErrorRate10, ErrorRate100, ErrorRate1000)
 CrossValidation = crossvalidation$performance$error
 
+#Display a table comparing training errors with cross-validation error rate
 TrainingTable <- cbind(TrainError, TrainErrorRate, CrossValidation)
 TrainingTable
 ```
@@ -719,11 +721,13 @@ plot(svm.cost0.001, testdata)
 
 The cross-validation error rate was exceptionally high at 60% for a cost value of 0.001, yet this cost value produced the lowest test error rate.  Our cross-validation suggested a cost-value of 0.1 was optimal, yet this value produced a modestly high test error rate.
 
-d.)  The dissonance between classification error rates on the training data and test data highlights the dangers of strictly fitting data which is just barely linearly separable.  When a separating hyperplane depends on just a few observations, the support vector classifier is subject to high variance and overfitting.  Both the test error rate and cross-validation rates for high cost values support this.  
+d.)  The dissonance between classification error rates on the training data and test data highlights the dangers of strictly fitting data which is just barely linearly separable.  When a separating hyperplane depends on just a few observations, the support vector classifier is subject to high variance and overfitting.  Both the test error rate and cross-validation rates for high cost values support this conclusion.  
 
 Interestingly, the test error rate and cross-validation error rate do not support the same cost values, though they both provide evidence that a high cost model is not best.  Cross-validation supports a moderate cost of 0.1 while the test error rate supports a very low cost of 0.001.  As mentioned before, the cross-validation had a very high error rate of over 50% for the 0.001 cost model.  What could be happening here?
 
-We believe part of the discrepancy is due to the relatively small sample sizes (n=60) used in the training and test data.  Creating randomly generated data sets that were "just barely linearly separable" with large sample sizes tended to require the center of each classification of observations to be significantly displaced, by 4 or more standard deviations.  This yielded SVMs whose accuracy were less prone to changes in the hyperplane slope, yielding more homogeneous results for varying degrees of cost.  We can now leverage the law of large numbers by creating a very large test data set to get a better sense of the average power at each cost value.  Let us try a test sample size of n=10000.
+We believe part of the discrepancy is due to the relatively small number of observations (n=60) used in both the training and test data.  Although utilizing larger data sets would have enabled us to make more robust conclusions, we had to limit ourselves to smaller "sample sizes".  Creating randomly generated data sets that were "just barely linearly separable" with large number of observations tended to require the center of each classification of observations to be significantly displaced, by 4 or more standard deviations.  These large data sets yielded SVMs whose accuracy were less prone to changes in the hyperplane slope, yielding more homogeneous results for varying degrees of cost.
+
+Let's try now to leverage the law of large numbers by creating a very large test data set to get a better sense of the average power at each cost value.  Below, we compare error rates for our models on 10,000 test observations.  We hide the code for brevity.
 
 ``` {r, echo=FALSE}
 #Generate test data in same fashion as training data
@@ -785,7 +789,7 @@ CombinedTable <- cbind(TestTable, TrainingTable)
 CombinedTable
 ```
 
-On a much larger test data set, we see that SVMs with cost values of 0.1 and 0.01 perform better the 0.001 cost.  This outcome is closer to what we would have expected based on our cross-validation which favored a 0.1 cost value.  Earlier, the cross-validation results did not correspond as nicely with the test error rate from the smaller test data set.  It seems random chance was playing a significant role in measuring the accuracy of the models on small data sets.  
+On a much larger test data set, we see that SVMs with cost values of 0.1 and 0.01 perform better the 0.001 cost.  This outcome is closer to what we would have expected based on our cross-validation which favored a 0.1 cost value.  Earlier, the cross-validation results did not correspond as nicely with the test error rate from the smaller test data set.  It seems randomness was playing a significant role in measuring the test accuracy of the models on small data sets. 
 
 Cross-validation is great tool for informing our choice of model parameters.  When paired with other decision-making tools, we can generate a model that best meets our needs without falling into common traps such as overfitting training data.  We should be especially be careful in edge cases, such as when data are just barely linearly separable, as we can be misled by performance on these precarious training data.
 

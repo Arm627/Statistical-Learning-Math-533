@@ -1,7 +1,7 @@
 ---
 title: "Midterm Project"
 author: "Brandon Amaral, Monte Davityan, Nicholas Lombardo, Hongkai Lu"
-date: "10/18/2022"
+date: "10/19/2022"
 output:
   word_document: default
   html_document:
@@ -20,31 +20,31 @@ options(knitr.kable.NA = '')
 This section is focus on definition and introduction the concept of an optimal separating hyperplane.
 
 #### 9.1.1 What Is a Hyperplane?
-\
-A line is a hyperplane in a two dimensions space; a plane is a hyperplane in a three dimensions space; a flat affine subspace of p-1 dimension subspace is a hyperplane in a p-dimensional space. 
+
+A line is a hyperplane in a two dimensions space; a plane is a hyperplane in a three dimensions space; a flat affine subspace of $p-1$ dimension subspace is a hyperplane in a $p$-dimensional space. 
 The mathematical definition of a hyperplane is defined by the equation as follow:
 $$
 \beta_{0}+\beta_{1}X_{1}+\beta_{2}X_{2}+\cdots+\beta_{p}X_{p}=0
 $$
-We have below sense for a p-dimensional hyperplane.
+We have below sense for a $p$-dimensional hyperplane.
 
-1: A point X lies on the hyperplane if $ X = (X_{1},X_{2},\dots,X_{p})^T$ in p-dimensional space sattisfies.
+1: A point $X$ lies on the hyperplane if $ X = (X_{1},X_{2},\dots,X_{p})^T$ in $p$-dimensional space satisfies.
 
-2: A point X lies to one side of the hyperplane if 
+2: A point $X$ lies to one side of the hyperplane if 
 $$
 \beta_{0}+\beta_{1}X_{1}+\beta_{2}X_{2}+\cdots+\beta_{p}X_{p}>0
 $$
 
-3: A point X lies to other side of the hyperplane if 
+3: A point $X$ lies to other side of the hyperplane if 
 $$
 \beta_{0}+\beta_{1}X_{1}+\beta_{2}X_{2}+\cdots+\beta_{p}X_{p}<0
 $$
-Thus, we can think of the hyperplane as dividing p-dimensional space into two halves.
+Thus, we can think of the hyperplane as dividing $p$-dimensional space into two halves.
 
 #### 9.1.2 Classification Using a Separating Hyperplane
-\
-First, suppose that we have a n X p data matrix $\mathbf X$ that consists of n training observations in a p-dimensinal space. The training observations fall into two groups, where $ y_{1}, \dots, y_{n} \in {-1,1} $ and −1 represents one class and 1 the other class. 
-Second, try to constuct a separating hyperplane which is a hyperplane that separates the training observations perfectly according to their class labels. That separating hyperplane has below property:
+
+First, suppose that we have an $n \times p$ data matrix $\mathbf X$ that consists of $n$ training observations in a $p$-dimensinal space. The training observations fall into two groups, where $ y_{1}, \dots, y_{n} \in \{-1,1\} $, -1 represents one class, and 1 the other class. 
+Second, try to construct a separating hyperplane which is a hyperplane that separates the training observations perfectly according to their class labels. That separating hyperplane has the below property:
 
 1: 
 $$
@@ -54,16 +54,16 @@ $$
 $$
 \beta_{0}+\beta_{1}X_{1}+\beta_{2}X_{2}+\cdots+\beta_{p}X_{p}<0  \quad if \quad y_{i}=-1,
 $$
-Next, we use the constructed separating hyperplane to construct a very natural classifier: a test observation is assigned a class depending on which side of the hyperplane it is located. The classifier is based on a separating hyperplane leads to a linear decision boundary.
+Next, we use the constructed separating hyperplane to construct a very natural classifier: a test observation is assigned a class depending on which side of the hyperplane it is located. The classifier is based on a separating hyperplane which leads to a linear decision boundary.
 
 
 #### 9.1.3 The Maximal Margin Classifier 
-\
-The goal is to construct a classifier based upon a separating hyperplane. Instinctively, the maximal margin hyperplane is the separating hyperplane that optimal separating hyperplane is farthest from the training observations. Then, we can classify a test observation based on which side of the maximal margin hyperplane it lies, which is the maximal margin classifier.
+
+The goal is to construct a classifier based upon a separating hyperplane. Instinctively, the maximal margin hyperplane is the separating hyperplane that is farthest from the training observations. Then, we can classify a test observation based on which side of the maximal margin hyperplane it lies, which is the maximal margin classifier.
 
 #### 9.1.4 Construction of the Maximal Margin Classifier 
-\
-Suppose we have a set of n training observations $ x_{1}, \dots, x_{n} \in \mathbb{R}^p $ and associated class labels $ y_{1}, \dots, y_{n} \in {-1,1} $ , then the maximal margin hyperplane is to solve the optimization problem as follows:
+
+Suppose we have a set of $n$ training observations $ x_{1}, \dots, x_{n} \in \mathbb{R}^p $ and associated class labels $ y_{1}, \dots, y_{n} \in \{-1,1\} $, then the maximal margin hyperplane is to solve the optimization problem as follows:
 $$
   (9.9): \quad \underset {\beta_{0},\beta_{1},\dots,\beta_{p},M} {maximize} M
 $$
@@ -73,22 +73,21 @@ $$
 $$
   (9.11): \quad y_{i}(\beta_{0}+\beta_{1}x_{i1}+\beta_{2}x_{i2}+\dots+\beta_{p}x_{ip}) \geq M \quad \forall i=1,\dots,n)
 $$
-\
-First, use the inequation (9.11) to constrain each observation liles on the correct side of the hyperplane. Second, both (9.10) and (9.11) ensure that each observation is on the correct side of the hyperplane and at least a distance M from the hyperplane. Last, M represents the margin of our hyperplane, and the
-optimization problem chooses $\beta_{0},\beta_{1},\dots,\beta_{p}$ to maximize M.
+
+First, use the inequality (9.11) to constrain each observation to the correct side of the hyperplane. Second, both (9.10) and (9.11) ensure that each observation is on the correct side of the hyperplane and at least a distance M from the hyperplane. Last, M represents the margin of our hyperplane, and the optimization problem chooses $\beta_{0},\beta_{1},\dots,\beta_{p}$ to maximize M.
 
 
 #### 9.1.5 The Non-separable Case 
-\
-If a separating hyperplane exists, we can use the maximal margin classifier to perform classification. But in many cases, there is no separating hyperplane. The next section is focus on how to generalize the maximal margin classifier to the non-separable case, which is known as the support vector classifier.
+
+If a separating hyperplane exists, we can use the maximal margin classifier to perform classification. But in many cases, there is no separating hyperplane. The next section focuses on how to generalize the maximal margin classifier to the non-separable case, which is known as the support vector classifier.
 
 #### 9.2.1 Overview of the Support Vector Classifier
-\
-Suppose we have two classes observations. Instead of perfectly separating the two classes, the support vector classifier is more interesting on the greater robustness to individual observations and better classification of most of the training observations. In other words, the support vector classifier allows some observations to be lie on the incorrect side of the margin or even the incorrect side of the hyperplane. 
+
+Suppose we have two classes observations. Instead of perfectly separating the two classes, the support vector classifier is more interested in the greater robustness to individual observations and better classification of most of the training observations. In other words, the support vector classifier allows some observations to lie on the incorrect side of the margin or even the incorrect side of the hyperplane. 
 
 #### 9.2.2 Details of the Support Vector Classifier 
-\
-Similar to "Construction of the Maximal Margin Classifier", then the Support Vector Classifier is to solve the optimization problem as follows:
+
+Similar to "Construction of the Maximal Margin Classifier", the Support Vector Classifier is solves the optimization problem as follows:
 $$
   (9.12): \quad \underset {\beta_{0},\beta_{1},\dots,\beta_{p},\epsilon_{1},\dots,\epsilon_{n},M} {maximize} M
 $$
@@ -101,28 +100,28 @@ $$
 $$
   (9.15): \epsilon_{i} \geq 0, \quad \sum_{i=1}^{n}\epsilon_{i}\leq C, where \; C \; is \; a \; nonnegative \; tuning \; parameter
 $$
-\
-First, we use the slack variable $ \epsilon_{i} $ to locate the ith observation relative to the hyperplane and relative to the margin as follow:
-\
-(1): If $\epsilon_{i} = 0$ then the ith observation is on the correct side of the margin
-\
-(2): If $\epsilon_{i} \geq 0$ then the ith observation is on the wrong side of the margin
-\
+
+First, we use the slack variable $ \epsilon_{i} $ to locate the $i$th observation relative to the hyperplane and relative to the margin as follows:
+
+(1): If $\epsilon_{i} = 0$ then the $i$th observation is on the correct side of the margin
+
+(2): If $\epsilon_{i} \geq 0$ then the $i$th observation is on the wrong side of the margin
+
 (3): If $\epsilon_{i} \geq 1$ then it is on the wrong side of the hyperplane.
-\
-\
-Then, we use the C in (9.15) to be the controller as bias-variance trade-oﬀ of the statistical learning technique. According to the text, we know "When C is small, we seek narrow margins that are rarely violated; this amounts to a classifier that is highly fit to the data, which may have low bias but high variance. On the other hand, when C is larger, the margin is wider and we allow more violations to it; this amounts to fitting the data less hard and obtaining a classifier that is potentially more biased but may have lower variance."
-\
-\
-At last, the observations that lie directly on the margin or on the wrong side of the margin for their class are support vectors, which affect and result the support vector classifier. 
+
+
+Then, we use the $C$ in (9.15) to be the controller for the bias-variance trade-oﬀ of the statistical learning technique. According to the text, we know ``When $C$ is small, we seek narrow margins that are rarely violated; this amounts to a classifier that is highly fit to the data, which may have low bias but high variance. On the other hand, when $C$ is larger, the margin is wider and we allow more violations to it; this amounts to fitting the data less hard and obtaining a classifier that is potentially more biased but may have lower variance."
+
+
+Finally, the observations that lie directly on the margin or on the wrong side of the margin for their class are support vectors, which affect and result the support vector classifier. 
 
 ### 9.3 Support Vector Machines 
 #### 9.3.1 Classification with Non-Linear Decision Boundaries 
 
-In the two-class setting, the support vector classifier is a natural approach  for classification if the boundary between the two classes is liner. For non-linear class boundaries, we could enlarge the feature space using quadratic, cubic, and even higher-order polynomial functions of the predictors to fit a support vector classifier. 
-\
-\
-Suppose we have a set of n training observations $ x_{1}, \dots, x_{n} \in \mathbb{R}^p $ and associated class labels $ y_{1}, \dots, y_{n} \in {-1,1} $, we use 2p features to fit (9.12) - (9.15)
+In the two-class setting, the support vector classifier is a natural approach  for classification if the boundary between the two classes is linear. For non-linear class boundaries, we could enlarge the feature space using quadratic, cubic, and even higher-order polynomial functions of the predictors to fit a support vector classifier. 
+
+
+Suppose we have a set of $n$ training observations $ x_{1}, \dots, x_{n} \in \mathbb{R}^p $ and associated class labels $ y_{1}, \dots, y_{n} \in \{-1,1\} $, we use $2p$ features to fit (9.12) - (9.15)
 $$
   X_{1},X_{1}^2,X_{2},X_{2}^2,\dots,X_{p},X_{p}^2.
 $$
@@ -139,19 +138,19 @@ $$
 
 #### 9.3.2 The Support Vector Machine 
 
-By using kernels, the extension of the support vector classifier that results from enlarging the feature space in a specific way is known as The support vector machine (SVM). Suppose we have a support vector classifier can be represented as
+By using kernels, the extension of the support vector classifier that results from enlarging the feature space in a specific way is known as the support vector machine (SVM). Suppose we have a support vector classifier that can be represented as
 $$
   f(x) = \beta_{0}+\sum_{i \in S}\alpha_{i} K\langle x, x_{i}\rangle
 $$
 (1): If we take a linear kernel $$ K\langle x, x_{i}\rangle = \sum_{j=1}^{p}x_{ij}x_{i'j}  $$  , it is a linear support vector classifier.
-\
-(2): If we take a polynomial kernel of degree d  $$  K\langle x, x_{i}\rangle = (1 + \sum_{j=1}^{p}x_{ij}x_{i'j})^d  $$  , it is a non-linear support vector classifier.
-\
-(3): If we take a radial kernel $$ K\langle x, x_{i}\rangle = exp(-\gamma \sum_{j=1}^{p}(x_{ij}-x_{i'j})^2)  $$  , it is a non-linear support vector classifier.
+
+(2): If we take a polynomial kernel of degree $d$  $$  K\langle x, x_{i}\rangle = (1 + \sum_{j=1}^{p}x_{ij}x_{i'j})^d  $$  , it is a non-linear support vector classifier.
+
+(3): If we take a radial kernel $$ K\langle x, x_{i}\rangle = \exp(-\gamma \sum_{j=1}^{p}(x_{ij}-x_{i'j})^2)  $$  , it is a non-linear support vector classifier.
 
 #### 9.3.3 An Application to the Heart Disease Data 
 
-In this section, we fit LDA and SVM to the heart disease training data. By using ROC curves, we can see the SVM using a polynomial kernel of degree d = 1 is slightly superior than LDA. Also, Figure 9.10 displays ROC curves for SVMs using a radial kernel with three values of $ \gamma $, which indicates while a more flexible method will often produce lower training error rates and that does not improve the performance on test data. 
+In this section, we fit LDA and SVM to the heart disease training data. By using ROC curves, we can see the SVM using a polynomial kernel of degree $d = 1$ is slightly superior to LDA. Also, Figure 9.10 displays ROC curves for SVMs using a radial kernel with three values of $ \gamma $, which indicates a more flexible method will often produce lower training error rates but may not improve performance on test data. 
 
 ### 9.4 SVMs with More than Two Classes 
 
@@ -159,27 +158,26 @@ The goal is to extend SVMs to the more general case where we have some arbitrary
 
 #### 9.4.1 One-Versus-One Classification
 
-Suppose there are K > 2 classes, we would like to perform classification using a one-versus-one or all-pairs approach constructs $\binom{k}{2}$ SVMs. 
-First, classify a test observation using each of the $\binom{k}{2}$ classifiers. Second, tally the number of times that the test observation is assigned to each
-of the K classes. Last, assign the test observation to the class to which it was most frequently assigned in these $\binom{k}{2}$ pairwise classifications to obtain the final classification.
+Suppose there are $K > 2$ classes, we would like to perform classification using a one-versus-one or all-pairs approach constructs $\binom{k}{2}$ SVMs. 
+First, classify a test observation using each of the $\binom{k}{2}$ classifiers. Second, tally the number of times that the test observation is assigned to each of the $K$ classes. Last, assign the test observation to the class to which it was most frequently assigned in these $\binom{k}{2}$ pairwise classifications to obtain the final classification.
 
 #### 9.4.2 One-Versus-All Classification
 
-In the one-versus-all approach, when we fit K SVMs, we compare one of the K classes to the remaining K-1 classes each time. 
+In the one-versus-all approach, when we fit $K$ SVMs, we compare one of the $K$ classes to the remaining $K-1$ classes each time. 
 
 ### 9.5 Relationship to Logistic Regression 
 
-First, we have below ridge regression and the lasso function:
+First, below, we have ridge regression and the lasso function:
 $$
   L(X, y, \beta) = \sum_{i=1}^{n}(y_{i}-\beta_{0}-\sum_{j=1}^{p}x_{ij}\beta_{j})^2
 $$
 
 Then, we introduce the loss function of SVM:
 $$
-  L(X, y, \beta) = \sum_{i=1}^{n} max[0,1 - y_{i}(\beta_{0}+\beta_{1}x_{i1}+\beta_{2}x_{i2}+\dots+\beta_{p}x_{ip})]
+  L(X, y, \beta) = \sum_{i=1}^{n} \max[0,1 - y_{i}(\beta_{0}+\beta_{1}x_{i1}+\beta_{2}x_{i2}+\dots+\beta_{p}x_{ip})]
 $$
 
-The hinge loss function of SVM is closely related to the loss function used in logistic regression. Due to the similarities, the results of logistic regression and the support vector classifier are often similar. SVMs tend to behave better than logistic regression if the classes are well separated; while as, logistic regression is often preferred if there is in more overlapping regimes.
+The hinge loss function of SVM is closely related to the loss function used in logistic regression. Due to the similarities, the results of logistic regression and the support vector classifier are often similar. SVMs tend to behave better than logistic regression if the classes are well separated; whereas logistic regression is often preferred if there are more overlapping regimes.
 
 ## 2 Murphy Section 17.3 Summary
 ### 17.3.1 Large margin classifiers
@@ -195,7 +193,7 @@ $$
 $$
 
 
-After conducted some transformation, the final objective becomes 
+After some transformation, the final objective becomes 
 
 $$
   \underset{\boldsymbol w, w_{0}}{min} \frac{1}{2} ||w||^2 \quad s.t. \quad \hat{y_{n}}(\boldsymbol w ^T \boldsymbol x + w_{0}) \geq1, \; n=1: N_{\mathcal{D}}
@@ -215,7 +213,7 @@ $$
 
 ### 17.3.3 Soft margin classifiers 
 
-Slack variables introduced if the data is not lineraly separable. We use the soft margin constraints to replace the ard constraints, then we have the new objectve as following:
+Slack variables are introduced if the data is not linearly separable. We use the soft margin constraints to replace the ard constraints, then we have the new objective as following:
 $$
   \underset{\boldsymbol w, w_{0}, \boldsymbol \xi}{min} \frac{1}{2} ||w||^2 + C \sum_{n=1}^{N_{\mathcal{D}}} \xi_n \quad s.t. \quad \xi_n \geq0,\; \hat{y_{n}}(\boldsymbol w ^T \boldsymbol x + w_{0}) \geq1 - \xi_n
 $$
@@ -231,7 +229,7 @@ By rewriting the prediction function, we have
 $$
   f(x) =  \hat{\boldsymbol w} ^T \boldsymbol x + \hat{w_{0}} = \sum_{n \in S} \alpha_{n} \tilde{y_n} x_{n}^Tx + \hat{w_{0}} =  \sum_{n \in S} \alpha_{n} \tilde{y_n} \mathcal{K}(x_n,x) + \hat{w_{0}}
 $$
-The bias term as following after kernelizing
+The bias term is the following after kernelizing
 
 $$
   \hat{w_{0}} = \frac{1}{|S|} \sum_{n \in S}(\tilde{y_i} - \hat{\alpha}_{j} \tilde{y_j} \mathcal{K}(x_j,x_i) ) 
@@ -239,15 +237,15 @@ $$
 
 ### 17.3.5 Converting SVM outputs into probabilities 
 
-The goal is to convert the output of an SVM to a probability. We have following probability
+The goal is to convert the output of an SVM to a probability. We have the following probability
 $$
   p(y=1 | \boldsymbol x, \boldsymbol \theta) = \sigma(af(\boldsymbol x)+b)
 $$
-where a, b can be estimated by maximum likelihood on a separate validation set.
+where $a$ and $b$ can be estimated by maximum likelihood on a separate validation set.
 
 ### 17.3.6 Connection with logistic regression 
 
-For the data points lie on the correct side of the decision boundary, we have $ \xi_n = 0 $; for the others, we have $ \xi_n = 1 - \tilde{y}_nf(\boldsymbol x_n) $. Then, we can rewrite the bojective euqation of Soft margin classifiers as following:
+For the data points that lie on the correct side of the decision boundary, we have $ \xi_n = 0 $; for the others, we have $ \xi_n = 1 - \tilde{y}_nf(\boldsymbol x_n) $. Then, we can rewrite the objective equation of the soft margin classifiers as follows:
 $$
   \mathcal{L}(w) = \sum_{i=1}^{N} \ell_{hinge} (\tilde{y_n},f(x_n)) + \lambda ||w||^2
 $$
@@ -255,31 +253,31 @@ where $ \lambda = (2C)^{-1} $ and $\ell_{hinge}$  is the hinge loss function as 
 $$
   \ell_{hinge} (\tilde{y_n},\eta) = max(0,1-\tilde{y_n}\eta)
 $$
-Compared to the logistic regression oprimizes:
+Compared to the logistic regression which optimizes:
 $$
   \mathcal{L}(w) = \sum_{i=1}^{N} \ell_{ll} (\tilde{y_n},f(x_n)) + \lambda ||w||^2
 $$
-Where the log loss function as below:
+Where the log loss function is as below:
 $$
   \ell_{ll} (\tilde{y_n},\eta) = log(1+e^{-\tilde{y_n}\eta})
 $$
 There are two major difference between the log loss and hinge loss:
-\
-1: The hinge loss is piecewise linear, so we cannot use regular gradient methods to optimize it. 
-\
+
+1: The hinge loss is piece-wise linear, so we cannot use regular gradient methods to optimize it. 
+
 2: The hinge loss has a region where it is strictly 0; this results in sparse estimates
 
 ### 17.3.7 Multi-class classification with SVMs 
 
-Similar to ISLR, for multi-class classification, Murphy introduces two methods which are the one-versus-the-rest and one-versus-one  approaches. 
+Similar to ISLR, for multi-class classification, Murphy introduces two methods which are the one-versus-the-rest and one-versus-one approaches. 
 
-### 17.3.8 How to choose the regularizer C 
+### 17.3.8 How to choose the regularizer $C$ 
 
-Typically, we apply cross-validation to determinate parameter C. By developing a path following algorithm in the spirit of lars, we are able to choose C efficiently. 
+Typically, we apply cross-validation to determinate parameter $C$. By developing a path following algorithm in the spirit of lars, we are able to choose $C$ efficiently. 
 
 ### 17.3.9 Kernel ridge regression 
 
-The kernel ridge regression as follows:
+The kernel ridge regression is as follows:
 $$
   f(x; w) = k^T(\boldsymbol K+\lambda \boldsymbol I_N)^{-1}y
 $$
@@ -849,7 +847,7 @@ The above equation for $(j_i,t_i)$ can then be used to find the best feature and
 
 ### 18.1.3 Regularization
 
-If the tree becomes deep enough, the error rate on the training set tends to 0 by partitioning the input space into small enough regions, which leads to overfitting. There are two main approaches to prevent this: stop the tree growing process according to some heuristic (e.g. reaching some maximum depth), or grow the tree to its maximum depth and pruning it back by merging split subtrees back into their parent. 
+If the tree becomes deep enough, the error rate on the training set tends to 0 by partitioning the input space into small enough regions, which leads to overfitting. There are two main approaches to prevent this: stop the tree growing process according to some heuristic (e.g. reaching some maximum depth), or grow the tree to its maximum depth and prune it back by merging split subtrees back into their parent. 
 
 ### 18.1.4 Handling Missing Input Features
 
@@ -870,7 +868,7 @@ $$
 f(y|\boldsymbol{x}) = \frac{1}{|\mathcal{M}|}\sum_{m\in\mathcal{M}} f_m(y|\boldsymbol{x}),
 $$
 where $f_m$ is the $m$'th base model. The ensemble will have similar bias to the base models but lower variance. 
-For regression models, averaging is a good way to combine predictions, and for classifiers is is sometimes better to take a majority vote of the outputs. 
+For regression models, averaging is a good way to combine predictions, and for classifiers it is sometimes better to take a majority vote of the outputs. 
 
 ### 18.2.1 Stacking
 
@@ -960,7 +958,7 @@ $$
 $$
 With an infinite sample size, the optimal solution to the exponential loss is the same as for the log loss.
 
-It turns out that the exponential loss is easier to optimize in the boosting setting however. If the base classifier $F_m$ returns a binary class label. The resulting algorithm is called discrete AdaBoost. If $F_m$ returns a probability instead, a modified version, called real AdaBoost, can be used.
+It turns out that the exponential loss is easier to optimize in the boosting setting however. If the base classifier $F_m$ returns a binary class label, the resulting algorithm is called discrete AdaBoost. If $F_m$ returns a probability instead, a modified version, called real AdaBoost, can be used.
 
 At step $m$, we minimize
 $$
@@ -987,11 +985,11 @@ $$
 $$
 where $\alpha_m = 2\beta_m$. 
 
-SAMME stands for stagewise additive modeling using a multiclass exponential loss function is an adaboost-like algorithm to minimize a multiclass generalization of exponential loss.
+SAMME stands for stagewise additive modeling using a multiclass exponential loss function is an AdaBoost-like algorithm to minimize a multiclass generalization of exponential loss.
 
 ### 18.5.4 LogitBoost
 
-Exponential loss pus a lot of weight on misclassified examples, which makes the method sensitive to outliers. Since $e^{-\tilde{y}f}$ is not the logarithm of a pmf for binary variables $\tilde{y}\in\{-1,+1\}$, we can't recover probability estimates from $f(\boldsymbol x)$. 
+Exponential loss puts a lot of weight on misclassified examples, which makes the method sensitive to outliers. Since $e^{-\tilde{y}f}$ is not the logarithm of a pmf for binary variables $\tilde{y}\in\{-1,+1\}$, we can't recover probability estimates from $f(\boldsymbol x)$. 
 
 Log loss only punishes mistakes linearly, which means that we can extract probabilities using 
 $$
@@ -1042,7 +1040,7 @@ $$
 
 ### 18.5.5.2 XGBoost
 
-XGBoost stands for extreme gradient boosting, and is an efficient implementation of gradient boosted trees. It adds a regularizer on the tree complexity, uses a second order approximation of the loss instead of a linear approximation, samples features at internal nodes, and uses other methods to ensure scalability. 
+XGBoost stands for extreme gradient boosting, and is an efficient implementation of gradient boosted trees. It adds a regularizer on the tree complexity, uses a second order approximation of the loss instead of a linear approximation, samples features at internal nodes, and uses other computer science methods to ensure scalability. 
 
 XGBoost optimizes the following
 $$
@@ -1086,7 +1084,7 @@ $$
 
 ## 6 Alzheimer's data Problem
 
-```{r}
+```{r, cache=TRUE}
 # Libraries
 library(tidymodels)
 library(tidyverse)
@@ -1100,7 +1098,7 @@ library(ggplot2)
 ```
 
 
-```{r}
+```{r, cache=TRUE}
 # Read in data
 alz <- read.csv("alzheimer_data.csv")
 
@@ -1111,7 +1109,7 @@ dim(alz)
 #summary(alz)
 ```
 
-```{r}
+```{r, cache=TRUE}
 # Get Count Of Unique Results (if the count is low its probably a factor) (This is used below in the data cleaning section)
 
 # The reason for this is because there are many variables that are integers that should be factors and I am too lazy to manually convert them to factors so this does it for me based on the threshold of unique values
@@ -1133,7 +1131,7 @@ for (var in colnames(alz)) {
 print(factoredVars)
 ```
 
-```{r}
+```{r, cache=TRUE}
 # Data cleaning (mainly just converting ints to factors)
 alz <- alz %>% 
   select(-id) %>% 
@@ -1142,7 +1140,7 @@ alz <- alz %>%
 
 
 
-```{r}
+```{r, cache=TRUE}
 ### Some basic data exploration on a few predictors
 
 #### Distribution of diagnosis
@@ -1155,7 +1153,7 @@ alz %>% group_by(diagnosis) %>% summarise(prop = n() / nrow(alz))
 
 A normal (0) diagnosis is slightly more skewed in terms of frequency of occurrence then the other two diagnosis types. 
 
-```{r}
+```{r, cache=TRUE}
 # Effect of age on diagnosis
 ggplot(data = alz, mapping = aes(x = age, y = diagnosis)) +
   geom_boxplot()
@@ -1167,7 +1165,7 @@ alz %>% group_by(diagnosis) %>% summarise(mean_age = mean(age), med_age = median
 Seems a diagnosis of normal (0) with regards to age is slightly skewed towards being younger which makes since alzhemiers is a progressive degenerative disease. This is probably a significant predictor.
 
 
-```{r}
+```{r, cache=TRUE}
 # Effect of mealprep on diagnosis
 ggplot(data = alz, mapping = aes(x = diagnosis, color = mealprep, fill = mealprep)) +
   geom_bar()
@@ -1177,7 +1175,7 @@ ggplot(data = alz, mapping = aes(x = diagnosis, color = mealprep, fill = mealpre
 Mealprep of 0 (normal meal prep without assistance) is heavily skewed towards a diagnosis of normal (0) and the frequency of progressively worse meal prep scores increases as the diagnosis worsens implying mealprep may be a significant predictor.
 
 
-```{r}
+```{r, cache=TRUE}
 # Split into training and testing
 set.seed(123)
 split <- initial_split(alz)
@@ -1187,7 +1185,7 @@ test_df <- testing(split)
 
 ## Random Forest
 
-```{r}
+```{r, cache=TRUE}
 # Random Forest
 
 # The reason for not tuning trees is because it takes too long
@@ -1212,7 +1210,7 @@ wf <- workflow() %>%
 folds <- vfold_cv(train_df, v = 10)
 ```
 
-```{r}
+```{r, cache=TRUE}
 # Register parallel computation
 registerDoParallel()
 
@@ -1224,7 +1222,7 @@ tune_res <- tune_grid(
 )
 ```
 
-```{r}
+```{r, cache=TRUE}
 # Select the best model configuration based on roc area under curve
 best_auc <- select_best(tune_res, "roc_auc")
 
@@ -1237,7 +1235,7 @@ final_rf <- finalize_model(
 final_rf
 ```
 
-```{r}
+```{r, cache=TRUE}
 set.seed(123)
 # Finalize the workflow
 final_wf <- workflow() %>%
@@ -1252,11 +1250,11 @@ final_res <- final_wf %>%
 final_res %>%
   collect_metrics()
 ```
-**The tuned random forest model produces test misclassification rate of 0.1540741**
+The tuned random forest model produces test misclassification rate of 0.1540741.
 
 ## Bagging
 
-```{r}
+```{r, cache=TRUE}
 # Bagging
 
 # Define the specification for classification for bagging for tidymodels where min_n, tree_depth and cost complexity will be tuned
@@ -1273,7 +1271,7 @@ wf_bagging <- workflow() %>%
   add_model(spec_bagging)
 ```
 
-```{r}
+```{r, cache=TRUE}
 # Enable parrallel compute
 registerDoParallel()
 
@@ -1286,7 +1284,7 @@ tune_res_bagging <- tune_grid(
 ```
 
 
-```{r}
+```{r, cache=TRUE}
 # Select the best bagging model based on roc area under curve
 best_auc_bagging <- select_best(tune_res_bagging, "roc_auc")
 
@@ -1299,7 +1297,7 @@ final_bag <- finalize_model(
 final_bag
 ```
 
-```{r}
+```{r, cache=TRUE}
 set.seed(123)
 # Finalize the workflow
 final_wf_bag <- workflow() %>%
@@ -1315,11 +1313,11 @@ final_res_bag %>%
   collect_metrics()
 ```
 
-**The tuned bagging model produces test misclassification rate of 0.1688889**
+The tuned bagging model produces test misclassification rate of 0.1688889.
 
 
 ## Boosting
-```{r}
+```{r, cache=TRUE}
 # Boosting
 
 # The reason for not tuning trees is because it takes too long
@@ -1351,7 +1349,7 @@ wf_boosting <- workflow() %>%
   add_model(spec_boosting)
 ```
 
-```{r}
+```{r, cache=TRUE}
 # Enable parallel compute
 registerDoParallel()
 
@@ -1363,7 +1361,7 @@ tune_res_boosting <- tune_grid(
 )
 ```
 
-```{r}
+```{r, cache=TRUE}
 # Select the best boosting hyperparameters based on roc area under curve
 best_auc_boosting <- select_best(tune_res_boosting, "roc_auc")
 
@@ -1376,7 +1374,7 @@ final_boost <- finalize_model(
 final_boost
 ```
 
-```{r}
+```{r, cache=TRUE}
 set.seed(123)
 # Finalaize the workflow
 final_wf_boost <- workflow() %>%
@@ -1395,7 +1393,3 @@ final_res_boost %>%
 The tuned boosting model produces test misclassification rate of 0.157037
 
 Comparing the three models: Random forest, bagging and boosting had misclassification rate of 0.1540741, 0.1688889, and 0.157037 respectively. Therefore, the Random Forest was the best model when comparing misclassification rate which means about 15.4% of predictions made were incorrect on the test set.
-
-
-
-

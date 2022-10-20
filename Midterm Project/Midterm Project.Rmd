@@ -1072,6 +1072,35 @@ $$
 $$
 is the regularizer, where $J$ is the number of leaves, and $\gamma\geq 0$ and $\lambda \geq 0$ are regularization coefficients.
 
+At the $m$'th step, the loss is given by
+$$
+\mathcal{L}_m(F_m) = \sum_{i=1}^N\ell(y_i, f_{m-1}(\boldsymbol x_i) + F_m(\boldsymbol x_i)) + \Omega(F_m) + \text{const}.
+$$
+The second order Taylor expansion is as follows:
+$$
+\mathcal{L}_m(F_m)\approx \sum_{i=1}^N\left[\ell(y_i, f_{m-1}(\boldsymbol x_i)) + g_{im}F_m(\boldsymbol x_i) + \frac{1}{2}h_{im}F_m^2(\boldsymbol x_i)\right] + \Omega(F_m) + \text{const},
+$$
+where $h_{im}$ is the Hessian
+$$
+h_{im} = \left[\frac{\partial^2\ell(y_i, f(\boldsymbol x_i))}{\partial f(\boldsymbol x_i)^2}\right]_{f = f_{m-1}}.
+$$
+With regression trees, $F(\boldsymbol x) = w_{q(\boldsymbol x)}$, where $q:\mathbb{R}^D \rightarrow \{1,\dots,J\}$ controls which leaf node $\boldsymbol x$ belongs to, and $\boldsymbol w\in\mathbb{R}^J$ are the leaf weights. Thus, after some transformation, the 2nd order Taylor expansion can be written as
+$$
+\mathcal{L}_m(q,\boldsymbol w) \approx \sum_{j=1}^J\left[G_{jm}w_j + \frac{1}{2}(H_{jm}+\lambda)w_j^2\right] + \gamma J,
+$$
+where $G_{jm} = \sum_{i\in I_j}g_{im}$, $H_{jm} = \sum_{i\in I_j} h_{im}$, and $I_j = \{i: q(\boldsymbol x_i) = j\}$ is the set of indices of data points assigned to the $j$'th leaf.
+
+Then, the optimal weights are
+$$
+w_j^* = - \frac{G_{jm}}{H_{jm}+\lambda},
+$$
+so the loss at different tree structures $q$ is then
+$$
+\mathcal{L}(q, \boldsymbol w^*) = -\frac{1}{2}\sum_{j=1}^J\frac{G_{jm}^2}{H_{jm}+\lambda} + \gamma J,
+$$
+which can be greedily optimized using a recursive node splitting procedure.
+
+
 ### 18.6 Interpreting Tree Ensembles
 
 Ensembles of trees lose the property of being interpretable, but there are some simple methods to interprete what function has been learned.
